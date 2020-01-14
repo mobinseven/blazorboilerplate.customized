@@ -17,8 +17,16 @@ namespace BlazorBoilerplate.Server.Services
     public interface IApiLogService
     {
         Task Log(ApiLogItem apiLogItem);
+
         Task<ApiResponse> Get();
+
         Task<ApiResponse> GetByApplictionUserId(Guid applicationUserId);
+
+        #region Customized
+
+        Task<ApiLogItem> GetLastGet(string path, Guid userId);
+
+        #endregion Customized
     }
 
     public class ApiLogService : IApiLogService
@@ -41,7 +49,7 @@ namespace BlazorBoilerplate.Server.Services
             // Calling Log from the API Middlware results in a disposed ApplicationDBContext. This is here to build a DB Context for logging API Calls
             // If you have a better solution please let me know.
             _optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            
+
             if (Convert.ToBoolean(configuration["BlazorBoilerplate:UsePostgresServer"] ?? "false"))
             {
                 _optionsBuilder.UseNpgsql(configuration.GetConnectionString("PostgresConnection"));
@@ -68,7 +76,7 @@ namespace BlazorBoilerplate.Server.Services
                 //{
                 //    userSession = new UserSession(currentUser.Result);
                 //}
-            } 
+            }
             else
             {
                 apiLogItem.ApplicationUserId = null;
@@ -81,10 +89,26 @@ namespace BlazorBoilerplate.Server.Services
             }
         }
 
+        #region Customized
+
         public async Task<ApiResponse> Get()
         {
-            return new ApiResponse(200, "Retrieved Api Log", _autoMapper.ProjectTo<ApiLogItemDto>(_db.ApiLogs));
+            var logs = _autoMapper.ProjectTo<ApiLogItemDto>(_db.ApiLogs);
+            var users = _db.Users.Select(u => new { u.Id, u.UserName });
+            System.Collections.Generic.List<ApiLogItemDto> logsUserNames = new System.Collections.Generic.List<ApiLogItemDto>();
+            foreach (var log in logs)
+            {
+                try
+                {
+                    log.UserName = users.Where(u => u.Id == log.ApplicationUserId).FirstOrDefault().UserName;
+                    logsUserNames.Add(log);
+                }
+                catch { }
+            }
+            return new ApiResponse(200, "Retrieved Api Log", logsUserNames);
         }
+
+        #endregion Customized
 
         public async Task<ApiResponse> GetByApplictionUserId(Guid applicationUserId)
         {
@@ -97,5 +121,21 @@ namespace BlazorBoilerplate.Server.Services
                 return new ApiResponse(400, ex.Message);
             }
         }
+
+        #region Customized
+
+        public async Task<ApiLogItem> GetLastGet(string path, Guid userId)
+        {
+            var item = await _db.ApiLogs
+                .OrderByDescending(p => p.RequestTime)
+                .FirstAsync(log => log.Path == path && log.ApplicationUserId == userId);
+            return item;
+            //if (item != null)
+            //    return new ApiResponse(200, "Retrieved Old Value", item);
+            //else
+            //    return new ApiResponse(400, "Old Value was no requested");
+        }
+
+        #endregion Customized
     }
 }

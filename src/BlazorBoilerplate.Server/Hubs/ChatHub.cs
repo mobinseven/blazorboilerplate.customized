@@ -32,7 +32,6 @@ namespace BlazorBoilerplate.Server.Hubs
         /// </remarks>
         private static readonly Dictionary<string, string> userLookup = new Dictionary<string, string>();
 
-
         /// <summary>
         /// Deletes a message
         /// </summary>
@@ -61,7 +60,12 @@ namespace BlazorBoilerplate.Server.Hubs
             };
 
             await MessageService.Create(newMessage);
-            await Clients.All.SendAsync("ReceiveMessage", 0, user.UserName, message);
+
+            #region Customized
+
+            await Clients.All.SendAsync("ReceiveMessage", 0, user.UserName, message, newMessage.When);
+
+            #endregion Customized
         }
 
         /// <summary>
@@ -93,7 +97,7 @@ namespace BlazorBoilerplate.Server.Hubs
 
             foreach (var message in messages)
             {
-                Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", message.Id, message.UserName, message.Text);
+                Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", message.Id, message.UserName, message.Text, message.When);
             }
 
             return base.OnConnectedAsync();

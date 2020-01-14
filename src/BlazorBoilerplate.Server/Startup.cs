@@ -271,7 +271,7 @@ namespace BlazorBoilerplate.Server
                     {
                         if (context.Request.Path.StartsWithSegments("/api"))
                         {
-                            context.Response.StatusCode = (int) (HttpStatusCode.Unauthorized);
+                            context.Response.StatusCode = (int)(HttpStatusCode.Unauthorized);
                         }
 
                         return Task.CompletedTask;
@@ -284,23 +284,32 @@ namespace BlazorBoilerplate.Server
                 };
             });
 
-            services.AddControllers().AddNewtonsoftJson();
+            #region Customized
+
+            //services.AddControllers().AddNewtonsoftJson();
+
+            #endregion Customized
+
             services.AddSignalR();
 
-            services.AddSwaggerDocument(config =>
-            {
-                config.PostProcess = document =>
-                {
-                    document.Info.Version     = "0.6.0";
-                    document.Info.Title       = "Blazor Boilerplate";
-#if ServerSideBlazor
-                    document.Info.Description = "Blazor Boilerplate / Starter Template using the  Server Side Version";
-#endif
-#if ClientSideBlazor
-                    document.Info.Description = "Blazor Boilerplate / Starter Template using the Client Side / Webassembly Version.";
-#endif
-                };
-            });
+            #region Customized
+
+            //             services.AddSwaggerDocument(config =>
+            //             {
+            //                 config.PostProcess = document =>
+            //                 {
+            //                     document.Info.Version = "0.6.0";
+            //                     document.Info.Title = "Blazor Boilerplate";
+            // #if ServerSideBlazor
+            //                     document.Info.Description = "Blazor Boilerplate / Starter Template using the  Server Side Version";
+            // #endif
+            // #if ClientSideBlazor
+            //                     document.Info.Description = "Blazor Boilerplate / Starter Template using the Client Side / Webassembly Version.";
+            // #endif
+            //                 };
+            //             });
+
+            #endregion Customized
 
             services.AddResponseCompression(opts =>
             {
@@ -368,6 +377,19 @@ namespace BlazorBoilerplate.Server
 
 #endif
 
+            #region Customized
+
+            var assembly = typeof(VinarishLib.Models.Department).Assembly;
+            services.AddControllers().AddControllersAsServices().AddNewtonsoftJson()
+                .PartManager.ApplicationParts.Add(new Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart(assembly));
+            services.AddTransient<VinarishLib.Data.IDatabaseInitializer, VinarishLib.Data.DatabaseInitializer>();
+
+            services.AddDbContext<VinarishLib.Models.VinarishDbContext>(opt =>
+               opt.UseSqlServer(
+                    "Data Source=185.10.75.8;User ID=vinarish;Password=Hibernate70!;TrustServerCertificate=True;ApplicationIntent=ReadWrite;"));
+
+            #endregion Customized
+
             Log.Logger.Debug($"Total Services Registered: {services.Count}");
             foreach (var service in services)
             {
@@ -384,6 +406,13 @@ namespace BlazorBoilerplate.Server
             {
                 var databaseInitializer = serviceScope.ServiceProvider.GetService<IDatabaseInitializer>();
                 databaseInitializer.SeedAsync().Wait();
+
+                #region Customized
+
+                var VinarishDatabaseInitializer = serviceScope.ServiceProvider.GetService<VinarishLib.Data.IDatabaseInitializer>();
+                VinarishDatabaseInitializer.SeedAsync().Wait();
+
+                #endregion Customized
             }
 
             app.UseResponseCompression(); // This must be before the other Middleware if that manipulates Response
@@ -392,17 +421,17 @@ namespace BlazorBoilerplate.Server
             // Configure API Loggin in appsettings.json - Logs most API calls. Great for debugging and user activity audits
             app.UseMiddleware<APIResponseRequestLoggingMiddleware>(Convert.ToBoolean(Configuration["BlazorBoilerplate:EnableAPILogging:Enabled"] ?? "true"));
 
-            if (env.IsDevelopment())
+            //if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
 #if ClientSideBlazor
                 app.UseBlazorDebugging();
 #endif
             }
-            else
+            //else
             {
-              // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-              //    app.UseHsts(); //HSTS Middleware (UseHsts) to send HTTP Strict Transport Security Protocol (HSTS) headers to clients.
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                //    app.UseHsts(); //HSTS Middleware (UseHsts) to send HTTP Strict Transport Security Protocol (HSTS) headers to clients.
             }
 
             app.UseHttpsRedirection();
@@ -420,9 +449,13 @@ namespace BlazorBoilerplate.Server
             //Must be AFTER the Auth middleware to get the User/Identity info
             app.UseMiddleware<UserSessionMiddleware>();
 
+            #region Customized
+
             // NSwag
-            app.UseOpenApi();
-            app.UseSwaggerUi3();
+            //app.UseOpenApi();
+            //app.UseSwaggerUi3();
+
+            #endregion Customized
 
             app.UseEndpoints(endpoints =>
             {
@@ -438,7 +471,6 @@ namespace BlazorBoilerplate.Server
                 endpoints.MapFallbackToPage("/index_ssb");
 #endif
             });
-
         }
     }
 }

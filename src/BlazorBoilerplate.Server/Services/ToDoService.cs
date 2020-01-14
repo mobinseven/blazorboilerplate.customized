@@ -12,11 +12,16 @@ namespace BlazorBoilerplate.Server.Services
     public interface ITodoService
     {
         Task<ApiResponse> Get();
+
         Task<ApiResponse> Get(long id);
+
         Task<ApiResponse> Create(TodoDto todo);
+
         Task<ApiResponse> Update(TodoDto todo);
+
         Task<ApiResponse> Delete(long id);
     }
+
     public class ToDoService : ITodoService
     {
         private readonly ApplicationDbContext _db;
@@ -62,7 +67,7 @@ namespace BlazorBoilerplate.Server.Services
                 Title = todo.Title,
                 IsCompleted = todo.IsCompleted
             };*/
-            
+
             Todo todo = _autoMapper.Map<TodoDto, Todo>(todoDto);
             await _db.Todos.AddAsync(todo);
             await _db.SaveChangesAsync();
@@ -98,7 +103,12 @@ namespace BlazorBoilerplate.Server.Services
             {
                 _db.Todos.Remove(todo);
                 await _db.SaveChangesAsync();
-                return new ApiResponse(200, "Soft Delete Todo");
+
+                #region Customized
+
+                return new ApiResponse(200, "Soft Delete Todo", todo);
+
+                #endregion Customized
             }
             else
             {

@@ -34,5 +34,11 @@ namespace BlazorBoilerplate.Shared.Dto
         public string IPAddress { get; set; }
 
         public Guid ApplicationUserId { get; set; }
+
+        #region Customized
+
+        public string UserName { get; set; }
+
+        #endregion Customized
     }
 }

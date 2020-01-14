@@ -13,9 +13,12 @@ namespace BlazorBoilerplate.Server.Services
     public interface IMessageService
     {
         Task<ApiResponse> Create(MessageDto messageDto);
+
         List<MessageDto> GetList();
+
         Task<ApiResponse> Delete(int id);
     }
+
     public class MessageService : IMessageService
     {
         private readonly ApplicationDbContext _db;
@@ -46,7 +49,11 @@ namespace BlazorBoilerplate.Server.Services
 
         public List<MessageDto> GetList()
         {
-            return _autoMapper.ProjectTo<MessageDto>(_db.Messages).OrderBy(i => i.When).Take(10).ToList();
+            #region Customized
+
+            return _autoMapper.ProjectTo<MessageDto>(_db.Messages).OrderBy(i => i.When).ToList();
+
+            #endregion Customized
         }
     }
 }

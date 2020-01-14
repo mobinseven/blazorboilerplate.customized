@@ -32,7 +32,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// This method is called from Javascript when amessage is received
         /// </remarks>
         [JSInvokable]
-        public static void ReceiveMessage(string key, string method, int id, string username, string message)
+        public static void ReceiveMessage(string key, string method, int id, string username, string message, DateTime when)
         {
             if (_clients.ContainsKey(key))
             {
@@ -40,7 +40,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
                 switch (method)
                 {
                     case "ReceiveMessage":
-                        client.HandleReceiveMessage(id, username, message);
+                        client.HandleReceiveMessage(id, username, message, when);
                         return;
 
                     default:
@@ -126,10 +126,10 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// </summary>
         /// <param name="method">event name</param>
         /// <param name="message">message content</param>
-        private void HandleReceiveMessage(int id, string username, string message)
+        private void HandleReceiveMessage(int id, string username, string message, DateTime when)
         {
             // raise an event to subscribers
-            MessageReceived?.Invoke(this, new MessageReceivedEventArgs(id, username, message));
+            MessageReceived?.Invoke(this, new MessageReceivedEventArgs(id, username, message, when));
         }
 
         /// <summary>
@@ -212,11 +212,12 @@ namespace BlazorBoilerplate.CommonUI.Hubs
     /// </summary>
     public class MessageReceivedEventArgs : EventArgs
     {
-        public MessageReceivedEventArgs(int id, string username, string message)
+        public MessageReceivedEventArgs(int id, string username, string message, DateTime when)
         {
             Id = id;
             Username = username;
             Message = message;
+            When = when;
         }
 
         /// <summary>
@@ -233,5 +234,10 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// Message id
         /// </summary>
         public int Id { get; internal set; }
+
+        /// <summary>
+        /// Message Time
+        /// </summary>
+        public DateTime When { get; set; }
     }
 }
