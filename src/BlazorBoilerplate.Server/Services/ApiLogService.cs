@@ -93,17 +93,22 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> Get()
         {
-            var logs = _autoMapper.ProjectTo<ApiLogItemDto>(_db.ApiLogs);
+            var lis = await _db.ApiLogs.ToListAsync();
             var users = _db.Users.Select(u => new { u.Id, u.UserName });
             System.Collections.Generic.List<ApiLogItemDto> logsUserNames = new System.Collections.Generic.List<ApiLogItemDto>();
-            foreach (var log in logs)
+            foreach (var lo in lis)
             {
                 try
                 {
+                    ApiLogItemDto log = new ApiLogItemDto();
+                    log = (ApiLogItemDto)_autoMapper.Map(lo, lo.GetType(), log.GetType());
                     log.UserName = users.Where(u => u.Id == log.ApplicationUserId).FirstOrDefault().UserName;
                     logsUserNames.Add(log);
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
             return new ApiResponse(200, "Retrieved Api Log", logsUserNames);
         }

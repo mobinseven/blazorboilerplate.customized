@@ -1,0 +1,44 @@
+﻿html, body {
+    font-family: BNazanin,MyriadPro !important;
+    direction: rtl;
+    font-size: larger;
+    text-align: justify;
+    table-layout: fixed;
+}
+
+td, th {
+    width: auto;
+}
+
+    td.min, th.min {
+        width: 1%;
+        white-space: nowrap;
+    }
+
+.form-signin {
+    width: 100%;
+    max-width: 330px;
+    padding: 15px;
+    margin: 0 auto;
+}
+
+.dataTables_filter {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+}
+
+    .dataTables_filter label {
+        width: 100%;
+    }
+
+    .dataTables_filter input {
+        text-align: center;
+        width: 100%;
+        margin: 1px;
+        border: none;
+        border-bottom: 1px solid #000000;
+        padding: 5px;
+        color: #aaa;
+        font-family: BNazanin, FontAwesome;
+    }

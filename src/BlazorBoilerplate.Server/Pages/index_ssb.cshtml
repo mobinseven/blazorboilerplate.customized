@@ -13,19 +13,13 @@
     <link rel="icon" type="image/x-icon" href="_content/BlazorBoilerplate.CommonUI/images/favicon.ico">
     <base href="~/" />
 
-    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/css/font-awesome.min.css" rel="stylesheet" />
     <link href="_content/BlazorBoilerplate.CommonUI/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="_content/BlazorBoilerplate.CommonUI/css/site.css" rel="stylesheet" />
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55161075-2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'UA-55161075-2');
-    </script>
-
+    <link href="_content/BlazorBoilerplate.CommonUI/css/fonts.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/css/StyleSheet.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/css/Messaging.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/css/persian-datepicker.min.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/other/DataTables/datatables.min.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
     <!-- SSB -->
@@ -33,22 +27,20 @@
         <component type="typeof(App)" render-mode="ServerPrerendered" />
     </app>
 
-    <div id="blazor-error-ui">
-        <i class="material-icons">error</i>
-        <environment include="Staging,Production">
-            An error has occurred. This application may no longer respond until reloaded.
-        </environment>
-        <environment include="Development">
-            An unhandled exception has occurred. See browser dev tools for details.
-        </environment>
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-
     <script src="_framework/blazor.server.js"></script>
     <!-- load remaining JS after blazor boot loads -->
     <script src="_content/MatBlazor/dist/matBlazor.js"></script>
     <script src="_content/BlazorBoilerplate.CommonUI/javascript/signalr.min.js"></script>
     <script src="_content/BlazorBoilerplate.CommonUI/javascript/chatClient.js"></script>
+
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/ScrollPosition.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/jquery-3.4.1.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/moment-with-locales.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/moment-jalaali.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/persian-date.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/persian-datepicker.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/hammer.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/other/DataTables/datatables.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/DataTable.js"></script>
 </body>
 </html>

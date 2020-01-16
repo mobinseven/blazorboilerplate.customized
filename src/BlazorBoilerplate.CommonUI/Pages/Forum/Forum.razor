@@ -1,8 +1,21 @@
 ﻿@page "/forum"
+@attribute [Authorize]
 @inject IAuthorizationService AuthorizationService
 @inherits ForumPageModel
 @inject HttpClient Http
+<style>
+    #scroller * {
+        /* don't allow the children of the scrollable element to be selected as an anchor node */
+        overflow-anchor: none;
+    }
 
+    #anchor {
+        /* allow the final child to be selected as an anchor node */
+        overflow-anchor: auto;
+        /* anchor nodes are required to have non-zero area */
+        height: 1px;
+    }
+</style>
 <AuthorizeView Context="AuthorizeContext">
     <NotAuthorized>
         <div class="alert alert-success">
@@ -11,29 +24,38 @@
     </NotAuthorized>
 </AuthorizeView>
 
-<h1>Forum</h1>
-<p>This forum page uses SignalR and persists in a database. </p>
+<h1>پیام‌رسان</h1>
 
 <AuthorizeView Context="AuthorizeContext">
     <Authorized>
-        <ForumMessageCreateForm Send="Send" />
-
-        <MatList SingleSelection="true" TwoLine="true">
-            @if (Messages == null || Messages.Count == 0)
+        <div id="scroller">
+            @if (Messages == null)
             {
-                <MatListItem>
-                    <MatListItemText>
-                        Loading messages...
-                    </MatListItemText>
-                </MatListItem>
+                <LoadingBackground ShowLogoBox="true"></LoadingBackground>
+            }
+            else if (Messages.Count == 0)
+            {
+                <span>بدون پیام.</span>
             }
             else
             {
+                {
+                    Messages.Sort((x, y) => x.When.CompareTo(y.When));
+                }
                 @foreach (var message in Messages)
                 {
-                    <ForumMessage Delete="Delete" Message="@message"  />
+                    <ForumMessage Delete="Delete" Message="@message" />
                 }
             }
-        </MatList>
+            <div class="MessageCreateForm"> <ForumMessageCreateForm Send="Send" /></div>
+            <div id="anchor"></div>
+        </div>
     </Authorized>
 </AuthorizeView>
+@inject IJSRuntime JSRuntime
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        JSRuntime.InvokeVoidAsync("ScrollToBottom");
+    }
+}

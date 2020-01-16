@@ -88,4 +88,10 @@
     <Folder Include="Logs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="VinarishLib">
+      <HintPath>..\..\..\Vinarish\VinarishLib\bin\Debug\netstandard2.0\VinarishLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

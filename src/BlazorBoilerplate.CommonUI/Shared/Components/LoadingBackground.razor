@@ -1,16 +1,19 @@
 ﻿<div class="triangle-container">
     <div class="triangles">
+
+        @if (ShowLogoBox)
+        {
+            <div class="loading-container text-center m-5">
+                <div style="background-image:url(_content/BlazorBoilerplate.CommonUI/images/Vinarish.svg);background-repeat:no-repeat;background-position: center;">
+                    <div class="spinner-border" style="width: 4rem; height: 4rem; vertical-align: middle !important" role="status">
+                    </div>
+                </div>
+                <br />
+                @ChildContent
+            </div>
+        }
     </div>
 </div>
-
-@if (ShowLogoBox)
-{
-    <div class="loading-container">
-        <img src="_content/BlazorBoilerplate.CommonUI/images/blazorboilerplate.svg" style="width:100px;" /><br />
-        @ChildContent
-    </div>
-}
-
 
 @code {
     [Parameter]
