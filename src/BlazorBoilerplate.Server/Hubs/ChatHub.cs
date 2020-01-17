@@ -82,7 +82,7 @@ namespace BlazorBoilerplate.Server.Hubs
                 // maintain a lookup of connectionId-to-username
                 userLookup.Add(currentId, username);
                 // re-use existing message for now
-                await Clients.AllExcept(currentId).SendAsync("ReceiveMessage", 0, username, $"{username} joined the chat");
+                await Clients.AllExcept(currentId).SendAsync("ReceiveMessage", 0, username, $"{username} joined the chat", DateTime.Now);
             }
         }
 
@@ -116,7 +116,7 @@ namespace BlazorBoilerplate.Server.Hubs
             if (userLookup.TryGetValue(id, out string username))
             {
                 userLookup.Remove(id);
-                await Clients.AllExcept(Context.ConnectionId).SendAsync("ReceiveMessage", 0, username, $"{username} has left the chat");
+                await Clients.AllExcept(Context.ConnectionId).SendAsync("ReceiveMessage", 0, username, $"{username} has left the chat", DateTime.Now);
             }
             await base.OnDisconnectedAsync(e);
         }

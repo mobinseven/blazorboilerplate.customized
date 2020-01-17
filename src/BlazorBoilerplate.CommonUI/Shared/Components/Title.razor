@@ -1,0 +1,45 @@
+﻿@code {
+    [Inject]
+    protected IJSRuntime JsRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Parameter]
+    public string Value { get; set; } = "";
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+            NavigationManager.LocationChanged -= LocationChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += LocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await SetTitle(new Uri(NavigationManager.Uri));
+    }
+
+    private async Task SetTitle(Uri uri)
+    {
+        var pageName = uri.Segments.Last();
+
+        await JsRuntime.InvokeVoidAsync("SetDocumentTitle", ((Value != "") ? Value+" | "+AppInfo.AppTitle : (pageName=="/")?AppInfo.AppTitle:pageName+" | "+AppInfo.AppTitle));
+    }
+
+    private async void LocationChanged(object sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        await SetTitle(new Uri(e.Location));
+    }
+}

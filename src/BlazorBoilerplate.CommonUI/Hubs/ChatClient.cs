@@ -6,13 +6,11 @@ using System.Threading.Tasks;
 
 namespace BlazorBoilerplate.CommonUI.Hubs
 {
-
     /// <summary>
     /// Generic client class that interfaces .NET Standard/Blazor with SignalR Javascript client
     /// </summary>
     public class ChatClient : IDisposable
     {
-
         #region static methods
 
         /// <summary>
@@ -20,9 +18,8 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// </summary>
         private static readonly Dictionary<string, ChatClient> _clients = new Dictionary<string, ChatClient>();
 
-
         /// <summary>
-        /// Inbound message handler 
+        /// Inbound message handler
         /// </summary>
         /// <param name="key"></param>
         /// <param name="method"></param>
@@ -54,7 +51,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
             }
         }
 
-        #endregion
+        #endregion static methods
 
         /// <summary>
         /// Ctor: create a new client for the given hub URL
@@ -72,7 +69,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// <summary>
         /// The Hub URL for chat client
         /// </summary>
-        const string HUBURL = "/chathub";
+        private const string HUBURL = "/chathub";
 
         /// <summary>
         /// Our unique key for this client instance
@@ -98,7 +95,6 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// JS runtime from DI
         /// </summary>
         private readonly IJSRuntime _JSruntime;
-
 
         /// <summary>
         /// Start the SignalR client on JS

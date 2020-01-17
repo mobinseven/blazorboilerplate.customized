@@ -16,42 +16,29 @@
         height: 1px;
     }
 </style>
-<AuthorizeView Context="AuthorizeContext">
-    <NotAuthorized>
-        <div class="alert alert-success">
-            <a href="/account/login">Log in</a> to post a message.
-        </div>
-    </NotAuthorized>
-</AuthorizeView>
 
-<h1>پیام‌رسان</h1>
-
-<AuthorizeView Context="AuthorizeContext">
-    <Authorized>
-        <div id="scroller">
-            @if (Messages == null)
-            {
-                <LoadingBackground ShowLogoBox="true"></LoadingBackground>
-            }
-            else if (Messages.Count == 0)
-            {
-                <span>بدون پیام.</span>
-            }
-            else
-            {
-                {
-                    Messages.Sort((x, y) => x.When.CompareTo(y.When));
-                }
-                @foreach (var message in Messages)
-                {
-                    <ForumMessage Delete="Delete" Message="@message" />
-                }
-            }
-            <div class="MessageCreateForm"> <ForumMessageCreateForm Send="Send" /></div>
-            <div id="anchor"></div>
-        </div>
-    </Authorized>
-</AuthorizeView>
+<div id="scroller">
+    @if (Messages == null)
+    {
+        <LoadingBackground ShowLogoBox="true"></LoadingBackground>
+    }
+    else if (Messages.Count == 0)
+    {
+        <span>بدون پیام.</span>
+    }
+    else
+    {
+        {
+            Messages.Sort((x, y) => x.When.CompareTo(y.When));
+        }
+        @foreach (var message in Messages)
+        {
+            <ForumMessage Delete="Delete" Message="@message" />
+        }
+    }
+    <div class="MessageCreateForm"> <ForumMessageCreateForm Send="Send" /></div>
+    <div id="anchor"></div>
+</div>
 @inject IJSRuntime JSRuntime
 @code {
     protected override void OnAfterRender(bool firstRender)
