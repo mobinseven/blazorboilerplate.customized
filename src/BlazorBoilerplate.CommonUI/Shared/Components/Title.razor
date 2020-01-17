@@ -1,4 +1,6 @@
-﻿@code {
+﻿<h3 align="center">@Value</h3>
+
+@code {
     [Inject]
     protected IJSRuntime JsRuntime { get; set; }
 
@@ -35,7 +37,7 @@
     {
         var pageName = uri.Segments.Last();
 
-        await JsRuntime.InvokeVoidAsync("SetDocumentTitle", ((Value != "") ? Value+" | "+AppInfo.AppTitle : (pageName=="/")?AppInfo.AppTitle:pageName+" | "+AppInfo.AppTitle));
+        await JsRuntime.InvokeVoidAsync("SetDocumentTitle", ((Value != "") ? Value + " | " + AppInfo.AppTitle : (pageName == "/") ? AppInfo.AppTitle : pageName + " | " + AppInfo.AppTitle));
     }
 
     private async void LocationChanged(object sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)

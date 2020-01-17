@@ -65,6 +65,30 @@ window.MakeDataTable = function () {
                 "next": "پسین",
                 "previous": "پیشین"
             }
+        },
+        initComplete: function () {
+            this.api().columns().every(function () {
+                var column = this;
+                if (column.index() == 0) return;
+                var select = $('<select class="datatable_multiselect"><option value="">همه</option></select>')
+                    .appendTo($(column.header()))//'.DataTables_sort_wrapper'
+                    .on('change', function () {
+                        var val = $.fn.dataTable.util.escapeRegex(
+                            $(this).val()
+                        );
+
+                        column
+                            .search(val ? '^' + val + '$' : '', true, false)
+                            .draw();
+                    })
+                    .click(function (e) {
+                        e.stopPropagation();
+                    });
+
+                column.data().unique().sort().each(function (d, j) {
+                    select.append('<option value="' + d + '">' + d + '</option>')
+                });
+            });
         }
     });
 

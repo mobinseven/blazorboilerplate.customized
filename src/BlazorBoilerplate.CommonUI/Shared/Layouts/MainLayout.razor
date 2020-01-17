@@ -1,13 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager navigationManager
 @inject AppState appState
-<style>
-    .btn_icon {
-        background-color: transparent;
-        border: none;
-        cursor: pointer;
-    }
-</style>
 <MatDrawerContainer Style="width: 100vw; height: 100vh;">
     <MatDrawer @bind-Opened="@Opened" Mode="@MatDrawerMode.Modal"
                Style="width: 100vw; height: 100vh;">
@@ -23,6 +16,7 @@
     </MatDrawer>
     <MatDrawerContent>
         <section class="container-fluid">
+            <Title></Title>
             @Body
         </section>
         <br />

@@ -6,6 +6,12 @@
     table-layout: fixed;
 }
 
+.btn_icon {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
 td, th {
     width: auto;
 }
@@ -36,9 +42,70 @@ td, th {
         text-align: center;
         width: 100%;
         margin: 1px;
-        border: none;
-        border-bottom: 1px solid #000000;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: .25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        transition-property: border-color, box-shadow;
+        transition-duration: 0.15s, 0.15s;
+        transition-timing-function: ease-in-out, ease-in-out;
+        transition-delay: 0s, 0s;
         padding: 5px;
         color: #aaa;
         font-family: BNazanin, FontAwesome;
+    }
+
+.datatable_multiselect {
+    width: 100%;
+}
+
+/* sort icons */
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_desc:before,
+table.dataTable thead .sorting_asc_disabled:before,
+table.dataTable thead .sorting_desc_disabled:before {
+    right: 0 !important;
+    content: "" !important;
+}
+
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_desc:after,
+table.dataTable thead .sorting_asc_disabled:after,
+table.dataTable thead .sorting_desc_disabled:after {
+    right: 0 !important;
+    content: "" !important;
+}
+
+table.dataTable thead th {
+    position: relative;
+    background-image: none !important;
+}
+
+    table.dataTable thead th.sorting:after,
+    table.dataTable thead th.sorting_asc:after,
+    table.dataTable thead th.sorting_desc:after {
+        position: absolute !important;
+        top: 12px !important;
+        right: 8px !important;
+        display: block !important;
+        font-family: FontAwesome !important;
+    }
+
+    table.dataTable thead th.sorting:after {
+        content: "\f0dc" !important;
+        color: #ddd !important;
+        font-size: 0.8em !important;
+        padding-top: 0.12em !important;
+    }
+
+    table.dataTable thead th.sorting_asc:after {
+        content: "\f0de" !important;
+    }
+
+    table.dataTable thead th.sorting_desc:after {
+        content: "\f0dd" !important;
     }

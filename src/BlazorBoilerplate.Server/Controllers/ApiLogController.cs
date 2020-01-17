@@ -10,7 +10,7 @@ namespace BlazorBoilerplate.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class ApiLogController : ControllerBase
     {
         private readonly IApiLogService _apiLogService;

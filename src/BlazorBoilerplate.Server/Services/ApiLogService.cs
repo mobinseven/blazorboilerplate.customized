@@ -52,7 +52,7 @@ namespace BlazorBoilerplate.Server.Services
 
             if (Convert.ToBoolean(configuration["BlazorBoilerplate:UsePostgresServer"] ?? "false"))
             {
-                _optionsBuilder.UseNpgsql(configuration.GetConnectionString("PostgresConnection"));
+                //_optionsBuilder.UseNpgsql(configuration.GetConnectionString("PostgresConnection"));
             }
             else if (Convert.ToBoolean(configuration["BlazorBoilerplate:UseSqlServer"] ?? "false"))
             {
@@ -60,7 +60,7 @@ namespace BlazorBoilerplate.Server.Services
             }
             else
             {
-                _optionsBuilder.UseSqlite($"Filename={configuration.GetConnectionString("SqlLiteConnectionFileName")}");  // Sql Lite / file database
+                //_optionsBuilder.UseSqlite($"Filename={configuration.GetConnectionString("SqlLiteConnectionFileName")}");  // Sql Lite / file database
             }
         }
 
