@@ -56,11 +56,6 @@ td, th {
         color: #aaa;
         font-family: BNazanin, FontAwesome;
     }
-
-.datatable_multiselect {
-    width: 100%;
-}
-
 /* sort icons */
 table.dataTable thead .sorting:before,
 table.dataTable thead .sorting_asc:before,

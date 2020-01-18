@@ -69,9 +69,11 @@ window.MakeDataTable = function () {
         initComplete: function () {
             this.api().columns().every(function () {
                 var column = this;
-                if (column.index() == 0) return;
-                var select = $('<select class="datatable_multiselect"><option value="">همه</option></select>')
-                    .appendTo($(column.header()))//'.DataTables_sort_wrapper'
+                if ($(column.header()).hasClass("Filterable") == false) return;
+                var filterRow = $('<div class="input-group"><div class= "input-group-append"><span class="input-group-text FilterTitle"></span></div></div>');
+                $(column.header()).find('.FilterHeaderContent').clone().appendTo($(filterRow).find(".FilterTitle"));
+                var select = $('<select class="form-control input-group-prepend "><option value="">همه</option></select>')
+                    .appendTo($(filterRow))//$(column.header()).find('.DataTables_sort_wrapper')
                     .on('change', function () {
                         var val = $.fn.dataTable.util.escapeRegex(
                             $(this).val()
@@ -84,7 +86,7 @@ window.MakeDataTable = function () {
                     .click(function (e) {
                         e.stopPropagation();
                     });
-
+                $(filterRow).appendTo($('.FilterGroup'));
                 column.data().unique().sort().each(function (d, j) {
                     select.append('<option value="' + d + '">' + d + '</option>')
                 });

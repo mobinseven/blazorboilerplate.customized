@@ -112,7 +112,7 @@
         }
         catch (Exception ex)
         {
-            matToaster.Add(ex.Message, MatToastType.Danger, "Login Attempt Failed");
+            matToaster.Add(ex.InnerException.Message, MatToastType.Danger, "Login Attempt Failed");
         }
     }
 
