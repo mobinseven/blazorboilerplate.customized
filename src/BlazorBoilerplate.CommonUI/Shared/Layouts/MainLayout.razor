@@ -1,40 +1,32 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager navigationManager
 @inject AppState appState
-<MatDrawerContainer Style="width: 100vw; height: 100vh;">
-    <MatDrawer @bind-Opened="@Opened" Mode="@MatDrawerMode.Modal"
-               Style="width: 100vw; height: 100vh;">
-        <div style="margin:15px;">
-            <header class="drawer-header text-center">
-                <div class="drawer-logo">
-                    <img src="@AppInfo.AppLogo" alt="@AppInfo.AppTitle" title="@AppInfo.AppTitle" width="72" height="72" />
-                    <h1>@AppInfo.AppTitle</h1>
-                </div>
-            </header>
-            <NavMenu />
-        </div>
-    </MatDrawer>
-    <MatDrawerContent>
-        <section class="container-fluid">
-            <Title></Title>
-            @Body
-        </section>
-        <br />
-        <br />
-        <footer class="fixed-bottom">
-            <nav class="navbar" style="background-color: rgba(255, 255, 255, 0.5);">
-                <div>
-                    <button class="btn_icon" @onclick="@(e=>ButtonClicked())">
-                        <span class="fa-stack">
-                            <i class="fa fa-circle fa-stack-2x"></i>
-                            <i class="fa fa-@Icon fa-stack-1x fa-inverse"></i>
-                        </span>
-                    </button>
-                </div>
-            </nav>
-        </footer>
-    </MatDrawerContent>
-</MatDrawerContainer>
+@inject IJSRuntime JSRuntime
+<Title></Title>
+<aside id="SideNav" class="sidenav">
+    <nav style="margin:15px;">
+        <header class="drawer-header text-center">
+            <div class="drawer-logo">
+                <img src="@AppInfo.AppLogo" alt="@AppInfo.AppTitle" title="@AppInfo.AppTitle" width="72" height="72" />
+                <h1>@AppInfo.AppTitle</h1>
+            </div>
+        </header>
+        <NavMenu OnClick="@(e=>ButtonClicked())" /> @* TODO: Close nav when clicked*@
+    </nav>
+</aside>
+<section id="container" class="container-fluid">
+    @Body
+</section>
+<footer style="position: fixed;bottom: 1px;right: 1px;z-index:99;">
+    <div>
+        <button class="btn_icon" @onclick="@(e=>ButtonClicked())">
+            <span class="fa-stack">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-@Icon fa-stack-1x fa-inverse"></i>
+            </span>
+        </button>
+    </div>
+</footer>
 
 @code {
     string Icon;
@@ -45,16 +37,18 @@
     }
     bool Opened = false;
 
-    void ButtonClicked()
+    async void ButtonClicked()
     {
-        Opened = !Opened;
         if (Opened)
         {
+            await JSRuntime.InvokeVoidAsync("CloseNav");
             Icon = "times";
         }
         else
         {
+            await JSRuntime.InvokeVoidAsync("OpenNav");
             Icon = "bars";
         }
+        Opened = !Opened;
     }
 }

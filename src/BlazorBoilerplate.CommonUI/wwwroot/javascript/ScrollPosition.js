@@ -1,7 +1,7 @@
-﻿var scrollerClassName = "mat-drawer-app-content";
+﻿var scroller = "container";
 window.SaveScrollPosition = function () {
     var LastPage = localStorage.getItem("LastPage");
-    var scrollPosition = document.getElementsByClassName(scrollerClassName)[0].scrollTop;
+    var scrollPosition = document.getElementById(scroller).scrollTop;
     localStorage.setItem("scrollPosition_" + LastPage, scrollPosition.toString());
 }
 window.SaveCurrentPagePath = function () {
@@ -12,9 +12,9 @@ window.LoadScrollPosition = function () {
     var pathName = document.location.pathname;
     var scroll = parseInt(localStorage.getItem("scrollPosition_" + pathName));
     if (!isNaN(scroll))
-        document.getElementsByClassName(scrollerClassName)[0].scrollTop = scroll;
+        document.getElementById(scroller).scrollTop = scroll;
 }
 window.ScrollToBottom = function () {
-    var elem = document.getElementsByClassName(scrollerClassName)[0];
+    var elem = document.getElementById(scroller);
     elem.scrollTop = elem.scrollHeight;
 }

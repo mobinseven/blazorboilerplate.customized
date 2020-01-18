@@ -4,6 +4,7 @@
     font-size: larger;
     text-align: justify;
     table-layout: fixed;
+    background-color: #fff;
 }
 
 .btn_icon {
@@ -104,3 +105,17 @@ table.dataTable thead th {
     table.dataTable thead th.sorting_desc:after {
         content: "\f0dd" !important;
     }
+/*************************************/
+
+.sidenav {
+    height: 100%;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    right: 100vw;
+    z-index: 98;
+    background-color: #fff;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+}

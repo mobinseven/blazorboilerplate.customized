@@ -17,9 +17,9 @@ window.ConvertAllTimeCellsFromNow = function () {
     }
 }
 window.MakeDataTable = function () {
-    $('.' + scrollerClassName).bind('scroll', function (e) { //TODO: scrollerClassName: Defined in ScrollPosition.js
-        table.fixedHeader.adjust();
-    });
+    //$('.' + scrollerClassName).bind('scroll', function (e) { //TODO: scrollerClassName: Defined in ScrollPosition.js
+    //    table.fixedHeader.adjust();
+    //});
 
     table = $('.table').DataTable({
         autoWidth: false,
@@ -72,7 +72,7 @@ window.MakeDataTable = function () {
                 if ($(column.header()).hasClass("Filterable") == false) return;
                 var filterRow = $('<div class="input-group"><div class= "input-group-append"><span class="input-group-text FilterTitle"></span></div></div>');
                 $(column.header()).find('.FilterHeaderContent').clone().appendTo($(filterRow).find(".FilterTitle"));
-                var select = $('<select class="form-control input-group-prepend "><option value="">همه</option></select>')
+                var select = $('<select class="form-control input-group-prepend "><option value="">پالایش نشده</option></select>')
                     .appendTo($(filterRow))//$(column.header()).find('.DataTables_sort_wrapper')
                     .on('change', function () {
                         var val = $.fn.dataTable.util.escapeRegex(
