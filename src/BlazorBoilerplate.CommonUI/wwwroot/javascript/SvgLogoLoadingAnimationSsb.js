@@ -15,9 +15,8 @@ $("body").bind("DOMNodeInserted", function (e) {
         }
         $('#LogoSVG').find('path').each(function (i, elem) {
             $(this).animate({ 'stroke-dashoffset': 0 }, {
-                duration: 2000,
-                easing: 'linear',
-                complete: loop
+                duration: 4000,
+                easing: 'linear'
             });
         });
     }

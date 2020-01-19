@@ -11,7 +11,7 @@
                 <h1>@AppInfo.AppTitle</h1>
             </div>
         </header>
-        <NavMenu OnClick="@(e=>ButtonClicked())" /> @* TODO: Close nav when clicked*@
+        <NavMenu /> @* TODO: Close nav when clicked*@
     </nav>
 </aside>
 <section id="container" class="container-fluid">
@@ -19,36 +19,18 @@
 </section>
 <footer style="position: fixed;bottom: 1px;right: 1px;z-index:99;">
     <div>
-        <button class="btn_icon" @onclick="@(e=>ButtonClicked())">
+        <button class="btn_icon" @onclick="@(e=>appState.ToggleNavState())">
             <span class="fa-stack">
                 <i class="fa fa-circle fa-stack-2x"></i>
-                <i class="fa fa-@Icon fa-stack-1x fa-inverse"></i>
+                <i id="NavButton" class="fa fa-bars fa-stack-1x fa-inverse"></i>
             </span>
         </button>
     </div>
 </footer>
 
 @code {
-    string Icon;
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
-        Opened = false;
-        Icon = "bars";
-    }
-    bool Opened = false;
-
-    async void ButtonClicked()
-    {
-        if (Opened)
-        {
-            await JSRuntime.InvokeVoidAsync("CloseNav");
-            Icon = "times";
-        }
-        else
-        {
-            await JSRuntime.InvokeVoidAsync("OpenNav");
-            Icon = "bars";
-        }
-        Opened = !Opened;
+        appState.jsRuntime = JSRuntime;
     }
 }

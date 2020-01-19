@@ -4,6 +4,8 @@
 @inject AuthenticationStateProvider authStateProvider
 @inject IMatToaster matToaster
 @inject AppState appState
+@implements IDisposable
+
 @if (IsLoggedIn)
 {
 
@@ -61,10 +63,19 @@ else
     public bool IsLoggedIn = false;
     [CascadingParameter]
     Task<AuthenticationState> authenticationStateTask { get; set; }
-
-    [Parameter]
-    public EventCallback<MouseEventArgs> OnClick { get; set; }
-
+    protected override void OnInitialized()
+    {
+        navigationManager.LocationChanged += LocationChanged;
+        base.OnInitialized();
+    }
+    void LocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        appState.ToggleNavState();
+    }
+    void IDisposable.Dispose()
+    {
+        navigationManager.LocationChanged -= LocationChanged;
+    }
     protected override async Task OnParametersSetAsync()
     {
         IsLoggedIn = false;
