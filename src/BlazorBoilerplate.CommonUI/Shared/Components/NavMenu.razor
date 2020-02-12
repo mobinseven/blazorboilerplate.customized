@@ -2,7 +2,6 @@
 @inject NavigationManager navigationManager
 @layout LoginLayout
 @inject AuthenticationStateProvider authStateProvider
-@inject IMatToaster matToaster
 @inject AppState appState
 @implements IDisposable
 
@@ -25,36 +24,23 @@
 }
 else
 {
-    <div class="text-center m-5">
-        <EditForm Model="@loginParameters" OnValidSubmit="@SubmitLogin">
-            <MatThemeProvider Theme="@theme1">
-                <div class="form-signin" dir="ltr">
-                    <fieldset>
-                        <p>
-                            <MatTextField @bind-Value="@loginParameters.UserName" Label="نام کاربری" Icon="person" IconTrailing="true" Outlined="true" Required="true"></MatTextField>
-                        </p>
-                        <p>
-                            <MatTextField @bind-Value="@loginParameters.Password" Label="گذرواژه" Icon="lock" IconTrailing="true" Outlined="true" Required="true" Type="password"></MatTextField>
-                        </p>
-                        <p>
-                            <MatCheckbox @bind-Value="@loginParameters.RememberMe" class="filled-in chk-col-blue"><div style="font-family:'B Nazanin' !important">مرا به یاد بسپار</div></MatCheckbox>
-                            <MatButton class="float-right" Type="submit" Raised="true"><span style="font-family:'B Nazanin' !important">درون شو</span></MatButton>
-                        </p>
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
-                    </fieldset>
-                </div>
-            </MatThemeProvider>
-        </EditForm>
-    </div>
+    <EditForm Model="@loginParameters" OnValidSubmit="@SubmitLogin">
+        <div class="form-group">
+            <input type="text" @bind="@loginParameters.UserName" Label="نام کاربری" class="form-control">
+        </div>
+        <div class="form-group">
+            <input type="password" @bind="@loginParameters.Password" Label="گذرواژه" class="form-control">
+        </div>
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" @bind="@loginParameters.RememberMe">
+            <label class="form-check-label" for="exampleCheck1">مرا به یاد بسپار</label>
+        </div>
+        <button type="submit" class="btn btn-primary">درون شو</button>
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+    </EditForm>
 }
 @code {
-
-    MatTheme theme1 = new MatTheme()
-    {
-        Primary = "#212121",
-        Secondary = "#4a148c"
-    };
     string navigateTo = "";
     bool forgotPasswordToggle = false;
     LoginDto loginParameters { get; set; } = new LoginDto();
@@ -104,45 +90,29 @@ else
     }
     async Task SubmitLogin()
     {
-        try
+        var response = await ((IdentityAuthenticationStateProvider)authStateProvider).Login(loginParameters);
+        if (response.StatusCode == 200)
         {
-            var response = await ((IdentityAuthenticationStateProvider)authStateProvider).Login(loginParameters);
-            if (response.StatusCode == 200)
+            // On successful Login the response.Message is the Last Page Visited from User Profile
+            // We can't navigate yet as the setup is proceeding asynchronously
+            if (!string.IsNullOrEmpty(response.Message))
             {
-                // On successful Login the response.Message is the Last Page Visited from User Profile
-                // We can't navigate yet as the setup is proceeding asynchronously
-                if (!string.IsNullOrEmpty(response.Message))
-                {
-                    navigateTo = response.Message;
-                }
-                else
-                {
-                    navigateTo = "/dashboard";
-                }
+                navigateTo = response.Message;
             }
             else
             {
-                matToaster.Add(response.Message, MatToastType.Danger, "Login Attempt Failed");
+                navigateTo = "/dashboard";
             }
         }
-        catch (Exception ex)
+        else
         {
-            matToaster.Add(ex.Message, MatToastType.Danger, "Login Attempt Failed");
         }
     }
 
     async Task ForgotPassword()
     {
-        try
-        {
-            await ((IdentityAuthenticationStateProvider)authStateProvider).ForgotPassword(forgotPasswordParameters);
-            matToaster.Add("Forgot Password Email Sent", MatToastType.Success);
-            forgotPasswordParameters.Email = "";
-            forgotPasswordToggle = false;
-        }
-        catch (Exception ex)
-        {
-            matToaster.Add(ex.Message, MatToastType.Danger, "Reset Password Attempt Failed");
-        }
+        await ((IdentityAuthenticationStateProvider)authStateProvider).ForgotPassword(forgotPasswordParameters);
+        forgotPasswordParameters.Email = "";
+        forgotPasswordToggle = false;
     }
 }

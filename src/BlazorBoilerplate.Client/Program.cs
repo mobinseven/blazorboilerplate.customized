@@ -3,7 +3,6 @@ using BlazorBoilerplate.CommonUI.Services.Contracts;
 using BlazorBoilerplate.CommonUI.Services.Implementations;
 using BlazorBoilerplate.CommonUI.States;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
-using MatBlazor;
 using Microsoft.AspNetCore.Blazor.Hosting;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,15 +32,15 @@ namespace BlazorBoilerplate.Client
             builder.Services.AddLoadingBar();
             builder.Services.Add(new ServiceDescriptor(typeof(IUserProfileApi), typeof(UserProfileApi), ServiceLifetime.Scoped));
             builder.Services.AddScoped<AppState>();
-            builder.Services.AddMatToaster(config =>
-            {
-                config.Position = MatToastPosition.BottomRight;
-                config.PreventDuplicates = true;
-                config.NewestOnTop = true;
-                config.ShowCloseButton = true;
-                config.MaximumOpacity = 95;
-                config.VisibleStateDuration = 3000;
-            });
+            //builder.Services.AddMatToaster(config =>
+            //{
+            //    config.Position = MatToastPosition.BottomRight;
+            //    config.PreventDuplicates = true;
+            //    config.NewestOnTop = true;
+            //    config.ShowCloseButton = true;
+            //    config.MaximumOpacity = 95;
+            //    config.VisibleStateDuration = 3000;
+            //});
 
             await builder
             .Build()

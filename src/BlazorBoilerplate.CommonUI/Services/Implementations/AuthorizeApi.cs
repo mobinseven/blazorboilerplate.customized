@@ -1,14 +1,14 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json;
-using BlazorBoilerplate.CommonUI.Services.Contracts;
+﻿using BlazorBoilerplate.CommonUI.Services.Contracts;
 using BlazorBoilerplate.Shared.Dto;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace BlazorBoilerplate.CommonUI.Services.Implementations
 {
@@ -21,7 +21,7 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
         public AuthorizeApi(NavigationManager navigationManager, HttpClient httpClient, IJSRuntime jsRuntime)
         {
             _navigationManager = navigationManager;
-            _httpClient = httpClient; 
+            _httpClient = httpClient;
             _jsRuntime = jsRuntime;
         }
 
@@ -29,36 +29,38 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
         {
             ApiResponseDto resp;
 
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/Account/Login");
-            httpRequestMessage.Content = new StringContent(JsonConvert.SerializeObject(loginParameters));
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/Account/Login")
+            {
+                Content = new StringContent(JsonConvert.SerializeObject(loginParameters))
+            };
             httpRequestMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
-            using (var response = await _httpClient.SendAsync(httpRequestMessage))
+            using (HttpResponseMessage response = await _httpClient.SendAsync(httpRequestMessage))
             {
                 response.EnsureSuccessStatusCode();
 
 #if ServerSideBlazor
 
-                if (response.Headers.TryGetValues("Set-Cookie", out var cookieEntries))
+                if (response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> cookieEntries))
                 {
-                    var uri = response.RequestMessage.RequestUri;
-                    var cookieContainer = new CookieContainer();
+                    Uri uri = response.RequestMessage.RequestUri;
+                    CookieContainer cookieContainer = new CookieContainer();
 
-                    foreach (var cookieEntry in cookieEntries)
+                    foreach (string cookieEntry in cookieEntries)
                     {
                         cookieContainer.SetCookies(uri, cookieEntry);
                     }
 
-                    var cookies = cookieContainer.GetCookies(uri).Cast<Cookie>();
+                    IEnumerable<Cookie> cookies = cookieContainer.GetCookies(uri).Cast<Cookie>();
 
-                    foreach (var cookie in cookies)
+                    foreach (Cookie cookie in cookies)
                     {
-                       await _jsRuntime.InvokeVoidAsync("jsInterops.setCookie", cookie.ToString());
+                        await _jsRuntime.InvokeVoidAsync("jsInterops.setCookie", cookie.ToString());
                     }
                 }
 #endif
 
-                var content = await response.Content.ReadAsStringAsync();
+                string content = await response.Content.ReadAsStringAsync();
                 resp = JsonConvert.DeserializeObject<ApiResponseDto>(content);
             }
 
@@ -68,7 +70,7 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
         public async Task<ApiResponseDto> Logout()
         {
 #if ServerSideBlazor
-            var cookies = _httpClient.DefaultRequestHeaders?.GetValues("Cookie")?.ToList();            
+            List<string> cookies = _httpClient.DefaultRequestHeaders?.GetValues("Cookie")?.ToList();
 #endif
 
             var resp = await _httpClient.PostJsonAsync<ApiResponseDto>("api/Account/Logout", null);
@@ -78,9 +80,9 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
             {
                 _httpClient.DefaultRequestHeaders.Remove("Cookie");
 
-                foreach (var cookie in cookies[0].Split(';'))
+                foreach (string cookie in cookies[0].Split(';'))
                 {
-                    var cookieParts = cookie.Split('=');
+                    string[] cookieParts = cookie.Split('=');
                     await _jsRuntime.InvokeVoidAsync("jsInterops.removeCookie", cookieParts[0]);
                 }
             }

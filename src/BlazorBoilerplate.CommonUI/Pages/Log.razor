@@ -1,80 +1,79 @@
 ﻿@page "/log"
-@*@attribute [Authorize]*@
+@attribute [Authorize]
 @inject HttpClient Http
-@inject IMatToaster matToaster
 @inject IJSRuntime JSRuntime
 @implements IDisposable
 <Title Value="گزارش سامانه"></Title>
 
 @if (apiLogItems == null)
 {
-<LoadingBackground ShowLogoBox="true">
-</LoadingBackground>
+    <LoadingBackground ShowLogoBox="true">
+    </LoadingBackground>
 }
 else
 {
-@*<p>
-        در این بخش گزارش دادوستدهای  کاربران با سامانه نمایش داده شده است.
-    </p>*@
-<div class="row">
-    <div class="col pl-0">
-        <div class="input-group">
-            <div class="input-group-append">
-                <span class="input-group-text">
-                    <i class="fa fa-hourglass-start fa-fw"></i>
-                </span>
+    @*<p>
+            در این بخش گزارش دادوستدهای  کاربران با سامانه نمایش داده شده است.
+        </p>*@
+    <div class="row">
+        <div class="col pl-0">
+            <div class="input-group">
+                <div class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-hourglass-start fa-fw"></i>
+                    </span>
+                </div>
+                <input class="input-group-prepend DatePicker from form-control" type="text" />
+                <div class="input-group-prepend">
+                    <button class="p-1 DatePickerClear from btn btn-sm btn-dark" type="button"><i class="fa fa-times"></i></button>
+                </div>
             </div>
-            <input class="input-group-prepend DatePicker from form-control" type="text" />
-            <div class="input-group-prepend">
-                <button class="p-1 DatePickerClear from btn btn-sm btn-dark" type="button"><i class="fa fa-times"></i></button>
+        </div>
+        <div class="col pr-0">
+            <div class="input-group">
+                <div class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fa fa-hourglass-end fa-fw"></i>
+                    </span>
+                </div>
+                <input class="input-group-prepend DatePicker to form-control" type="text" />
+                <div class="input-group-prepend">
+                    <button class="p-1 DatePickerClear to btn btn-sm btn-dark" type="button"><i class="fa fa-times"></i></button>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col pr-0">
-        <div class="input-group">
-            <div class="input-group-append">
-                <span class="input-group-text">
-                    <i class="fa fa-hourglass-end fa-fw"></i>
-                </span>
-            </div>
-            <input class="input-group-prepend DatePicker to form-control" type="text" />
-            <div class="input-group-prepend">
-                <button class="p-1 DatePickerClear to btn btn-sm btn-dark" type="button"><i class="fa fa-times"></i></button>
-            </div>
+    <div class="row">
+        <div class="col FilterGroup">
         </div>
     </div>
-</div>
-<div class="row">
-    <div class="col FilterGroup">
-    </div>
-</div>
-<div style="display: block;
+    <div style="display: block;
         width: 100%;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;">
-    <table class="table compact table-sm table-bordered" style="cursor: pointer !important;font-size: medium">
-        <thead>
-            <tr>
-                <th class="min">
-                    <div class="text-nowrap align-middle">
-                        <i class="fa fa-clock-o fa-fw"></i>
-                    </div>
-                </th>
-                <th class="min Filterable">
-                    <div class="FilterHeaderContent">
-                        <i class="fa fa-user fa-fw"></i>
-                    </div>
-                </th>
-                <th class="Filterable">
-                    <div class="FilterHeaderContent">
-                        <i class="fa fa-building fa-fw"></i>
-                    </div>
-                </th>
-                <th class="none"></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var context in apiLogItems)
+        <table class="table compact table-sm table-bordered" style="cursor: pointer !important;font-size: medium">
+            <thead>
+                <tr>
+                    <th class="min">
+                        <div class="text-nowrap align-middle">
+                            <i class="fa fa-clock-o fa-fw"></i>
+                        </div>
+                    </th>
+                    <th class="min Filterable">
+                        <div class="FilterHeaderContent">
+                            <i class="fa fa-user fa-fw"></i>
+                        </div>
+                    </th>
+                    <th class="Filterable">
+                        <div class="FilterHeaderContent">
+                            <i class="fa fa-building fa-fw"></i>
+                        </div>
+                    </th>
+                    <th class="none"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var context in apiLogItems)
                 {
                     string method = context.Method.ToUpper();
                     if (method == "GET") continue;
@@ -88,71 +87,71 @@ else
                         case "DELETE": color = "danger"; icon = "trash"; verb = "پاک کرده"; break;
                     }
 
-            <tr class="table-@color">
-                <td class="min datetime" data-order="@Utility.UnixTimestampSeconds(context.RequestTime)" data-search="@Utility.UnixTimestampSeconds(context.RequestTime)">
-                </td>
-                <td>@context.UserName</td>
-                <td>@context.Path.Split('/')[2]</td>
-                <td>
-                    @if (method == "DELETE" || method == "POST")
+                    <tr class="table-@color">
+                        <td class="min datetime" data-order="@Utility.UnixTimestampSeconds(context.RequestTime)" data-search="@Utility.UnixTimestampSeconds(context.RequestTime)">
+                        </td>
+                        <td>@context.UserName</td>
+                        <td>@context.Path.Split('/')[2]</td>
+                        <td>
+                            @if (method == "DELETE" || method == "POST")
                             {
                                 JObject obj = JsonConvert.DeserializeObject<JObject>(context.ResponseBody);
 
-                    <table style="width:100%">
-                        @{ var props = obj.Properties().ToArray();
-                        }
-
-                        @for (int p = 1; p < props.Count(); p++)
-                                    {
-                        <tr>
-                            <td class="min">@props[p].Name</td>
-                            <td>@props[p].Value</td>
-                        </tr>
+                                <table style="width:100%">
+                                    @{ var props = obj.Properties().ToArray();
                                     }
-                        <tr>
-                            <td colspan="2">
-                                <span class="text-@color">
-                                    <i class="fa fa-@icon fa-fw"></i>@verb
-                                </span>
-                            </td>
-                        </tr>
-                    </table>
+
+                                    @for (int p = 1; p < props.Count(); p++)
+                                    {
+                                        <tr>
+                                            <td class="min">@props[p].Name</td>
+                                            <td>@props[p].Value</td>
+                                        </tr>
+                                    }
+                                    <tr>
+                                        <td colspan="2">
+                                            <span class="text-@color">
+                                                <i class="fa fa-@icon fa-fw"></i>@verb
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
 
                             }
-                    @if (method == "PUT")
+                            @if (method == "PUT")
                             {
                                 JArray obj = JsonConvert.DeserializeObject<JArray>(context.ResponseBody);
                                 var NewProps = obj[0].ToObject<JObject>().Properties().ToArray();
                                 var OldProps = obj[1].ToObject<JObject>().Properties().ToArray();
-                    <div>
-                        <table style="width:100%">
-                            @for (int p = 1; p < NewProps.Count(); p++)
+                                <div>
+                                    <table style="width:100%">
+                                        @for (int p = 1; p < NewProps.Count(); p++)
                                         {
-                            <tr>
-                                <td class="min"><strong>@NewProps[p].Name&nbsp;</strong></td>
-                                <td>
-                                    @if (OldProps[p].Value.ToString() != NewProps[p].Value.ToString())
+                                            <tr>
+                                                <td class="min"><strong>@NewProps[p].Name&nbsp;</strong></td>
+                                                <td>
+                                                    @if (OldProps[p].Value.ToString() != NewProps[p].Value.ToString())
                                                     {
-                                    <span class="text-danger" style="text-decoration:line-through">
-                                        @OldProps[p].Value
-                                    </span>
-                                    <span class="text-@color">
-                                        <i class="fa fa-@icon fa-fw"></i>
-                                    </span>
+                                                        <span class="text-danger" style="text-decoration:line-through">
+                                                            @OldProps[p].Value
+                                                        </span>
+                                                        <span class="text-@color">
+                                                            <i class="fa fa-@icon fa-fw"></i>
+                                                        </span>
                                                     }
-                                    <span>&nbsp;@NewProps[p].Value</span>
-                                </td>
-                            </tr>
+                                                    <span>&nbsp;@NewProps[p].Value</span>
+                                                </td>
+                                            </tr>
                                         }
-                        </table>
-                    </div>
+                                    </table>
+                                </div>
                             }
-                </td>
-            </tr>
+                        </td>
+                    </tr>
                 }
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {
@@ -168,7 +167,7 @@ else
         }
         else
         {
-            matToaster.Add(apiResponse.Message, MatToastType.Danger, "Api Log Items Retrieval Failed");
+            //matToaster.Add(apiResponse.Message, MatToastType.Danger, "Api Log Items Retrieval Failed");
         }
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)

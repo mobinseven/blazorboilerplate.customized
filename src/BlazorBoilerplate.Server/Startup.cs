@@ -15,8 +15,6 @@ using BlazorBoilerplate.CommonUI.Services.Contracts;
 using BlazorBoilerplate.CommonUI.Services.Implementations;
 using BlazorBoilerplate.CommonUI.States;
 
-using MatBlazor;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 
@@ -288,7 +286,7 @@ namespace BlazorBoilerplate.Server
 
             #region Customized
 
-            //services.AddControllers().AddNewtonsoftJson();
+            services.AddControllers().AddNewtonsoftJson();
 
             #endregion Customized
 
@@ -349,15 +347,15 @@ namespace BlazorBoilerplate.Server
             services.AddScoped<IAuthorizeApi, AuthorizeApi>();
             services.AddScoped<IUserProfileApi, UserProfileApi>();
             services.AddScoped<AppState>();
-            services.AddMatToaster(config =>
-            {
-                config.Position = MatToastPosition.BottomRight;
-                config.PreventDuplicates = true;
-                config.NewestOnTop = true;
-                config.ShowCloseButton = true;
-                config.MaximumOpacity = 95;
-                config.VisibleStateDuration = 3000;
-            });
+            //services.AddMatToaster(config =>
+            //{
+            //    config.Position = MatToastPosition.BottomRight;
+            //    config.PreventDuplicates = true;
+            //    config.NewestOnTop = true;
+            //    config.ShowCloseButton = true;
+            //    config.MaximumOpacity = 95;
+            //    config.VisibleStateDuration = 3000;
+            //});
 
             // Setup HttpClient for server side
             services.AddScoped<HttpClient>();
@@ -381,14 +379,14 @@ namespace BlazorBoilerplate.Server
 
             #region Customized
 
-            var assembly = typeof(VinarishLib.Models.Department).Assembly;
-            services.AddControllers().AddControllersAsServices().AddNewtonsoftJson()
-                .PartManager.ApplicationParts.Add(new Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart(assembly));
-            services.AddTransient<VinarishLib.Data.IDatabaseInitializer, VinarishLib.Data.DatabaseInitializer>();
+            //var assembly = typeof(VinarishLib.Models.Department).Assembly;
+            //services.AddControllers().AddControllersAsServices().AddNewtonsoftJson()
+            //    .PartManager.ApplicationParts.Add(new Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart(assembly));
+            //services.AddTransient<VinarishLib.Data.IDatabaseInitializer, VinarishLib.Data.DatabaseInitializer>();
 
-            services.AddDbContext<VinarishLib.Models.VinarishDbContext>(opt =>
-               opt.UseSqlServer(
-                    "Data Source=185.10.75.8;User ID=vinarish;Password=Hibernate70!;TrustServerCertificate=True;ApplicationIntent=ReadWrite;"));
+            //services.AddDbContext<VinarishLib.Models.VinarishDbContext>(opt =>
+            //   opt.UseSqlServer(
+            //        "Data Source=185.10.75.8;User ID=vinarish;Password=Hibernate70!;TrustServerCertificate=True;ApplicationIntent=ReadWrite;"));
 
             #endregion Customized
 
@@ -408,13 +406,6 @@ namespace BlazorBoilerplate.Server
             {
                 var databaseInitializer = serviceScope.ServiceProvider.GetService<IDatabaseInitializer>();
                 databaseInitializer.SeedAsync().Wait();
-
-                #region Customized
-
-                var VinarishDatabaseInitializer = serviceScope.ServiceProvider.GetService<VinarishLib.Data.IDatabaseInitializer>();
-                VinarishDatabaseInitializer.SeedAsync().Wait();
-
-                #endregion Customized
             }
 
             app.UseResponseCompression(); // This must be before the other Middleware if that manipulates Response
