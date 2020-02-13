@@ -17,7 +17,7 @@ namespace BlazorBoilerplate.Server.Services
 {
     public interface IAccountService
     {
-        Task<ApplicationUser> RegisterNewUserAsync(string userName, string email, string password, bool requireConfirmEmail);
+        Task<ApplicationUser> RegisterNewUserAsync(RegisterDto registerDto);
     }
 
     public class AccountService : IAccountService
@@ -39,17 +39,21 @@ namespace BlazorBoilerplate.Server.Services
             _configuration = configuration;
         }
 
-        public async Task<ApplicationUser> RegisterNewUserAsync(string userName, string email, string password, bool requireConfirmEmail)
+        public async Task<ApplicationUser> RegisterNewUserAsync(RegisterDto registerDto)
         {
             var user = new ApplicationUser
             {
-                UserName = userName,
-                Email = email
+                UserName = registerDto.UserName,
+                PhoneNumber = registerDto.PhoneNumber,
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
+                FullName = registerDto.FirstName + " " + registerDto.LastName,
+                PhoneNumberConfirmed = true
             };
 
-            var createUserResult = password == null ?
+            var createUserResult = registerDto.Password == null ?
                 await _userManager.CreateAsync(user) :
-                await _userManager.CreateAsync(user, password);
+                await _userManager.CreateAsync(user, registerDto.Password);
 
             if (!createUserResult.Succeeded)
             {
@@ -59,7 +63,8 @@ namespace BlazorBoilerplate.Server.Services
             await _userManager.AddClaimsAsync(user, new Claim[]{
                     new Claim(Policies.IsUser,""),
                     new Claim(JwtClaimTypes.Name, user.UserName),
-                    new Claim(JwtClaimTypes.Email, user.Email),
+                    new Claim(JwtClaimTypes.PhoneNumber, user.PhoneNumber),
+                    new Claim(JwtClaimTypes.PhoneNumberVerified, user.PhoneNumberConfirmed.ToString(), ClaimValueTypes.Boolean),
                     new Claim(JwtClaimTypes.EmailVerified, "false", ClaimValueTypes.Boolean)
                 });
 
@@ -68,34 +73,33 @@ namespace BlazorBoilerplate.Server.Services
 
             _logger.LogInformation("New user registered: {0}", user);
 
-            var emailMessage = new EmailMessageDto();
+            //TODO: Welcome SMS
+            //var emailMessage = new EmailMessageDto();
 
-            if (requireConfirmEmail)
-            {
-                // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=532713
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                string callbackUrl = string.Format("{0}/Account/ConfirmEmail/{1}?token={2}", _configuration["BlazorBoilerplate:ApplicationUrl"], user.Id, token);
+            //if (requireConfirmEmail)
+            //{
+            //    // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=532713
+            //    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            //    string callbackUrl = string.Format("{0}/Account/ConfirmEmail/{1}?token={2}", _configuration["BlazorBoilerplate:ApplicationUrl"], user.Id, token);
 
-                emailMessage.BuildNewUserConfirmationEmail(user.UserName, user.Email, callbackUrl, user.Id.ToString(), token); //Replace First UserName with Name if you want to add name to Registration Form
-            }
-            else
-            {
-                emailMessage.BuildNewUserEmail(user.FullName, user.UserName, user.Email, password);
-            }
+            //    emailMessage.BuildNewUserConfirmationEmail(user.UserName, user.Email, callbackUrl, user.Id.ToString(), token); //Replace First UserName with Name if you want to add name to Registration Form
+            //}
+            //else
+            //{
+            //    emailMessage.BuildNewUserEmail(user.FullName, user.UserName, user.Email, password);
+            //}
 
-            emailMessage.ToAddresses.Add(new EmailAddressDto(user.Email, user.Email));
-            try
-            {
-                await _emailService.SendEmailAsync(emailMessage);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogInformation("New user email failed: Body: {0}, Error: {1}", emailMessage.Body, ex.Message);
-            }
+            //emailMessage.ToAddresses.Add(new EmailAddressDto(user.Email, user.Email));
+            //try
+            //{
+            //    await _emailService.SendEmailAsync(emailMessage);
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogInformation("New user email failed: Body: {0}, Error: {1}", emailMessage.Body, ex.Message);
+            //}
 
             return user;
-
         }
-
     }
 }

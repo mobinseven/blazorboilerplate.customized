@@ -30,9 +30,9 @@ namespace BlazorBoilerplate.Server.Data
         public DatabaseInitializer(
             ApplicationDbContext context,
             PersistedGrantDbContext persistedGrantContext,
-            ConfigurationDbContext configurationContext, 
+            ConfigurationDbContext configurationContext,
             ILogger<DatabaseInitializer> logger,
-            UserManager<ApplicationUser> userManager, 
+            UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole<Guid>> roleManager)
         {
             _persistedGrantContext = persistedGrantContext;
@@ -93,10 +93,6 @@ namespace BlazorBoilerplate.Server.Data
                 {
                     UserId = user.Id,
                     ApplicationUser = user,
-                    Count = 2,
-                    IsNavOpen = true,
-                    LastPageVisited = "/dashboard",
-                    IsNavMinified = false,
                     LastUpdatedDate = DateTime.Now
                 };
                 _context.UserProfiles.Add(userProfile);
@@ -242,8 +238,6 @@ namespace BlazorBoilerplate.Server.Data
                         new Claim(JwtClaimTypes.Email, email),
                         new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
                         new Claim(JwtClaimTypes.PhoneNumber, phoneNumber)
-                        
-
                     }).Result;
 
                 //add claims version of roles
@@ -258,7 +252,6 @@ namespace BlazorBoilerplate.Server.Data
                 {
                     result = await _userManager.AddToRolesAsync(user, roles.Distinct());
                 }
-
                 catch
                 {
                     await _userManager.DeleteAsync(user);

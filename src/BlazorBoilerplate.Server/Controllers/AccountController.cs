@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazorBoilerplate.Server.Controllers
 {
@@ -90,7 +91,7 @@ namespace BlazorBoilerplate.Server.Controllers
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("Logged In: {0}", parameters.UserName);
-                    return new ApiResponse(200, _userProfileService.GetLastPageVisited(parameters.UserName));
+                    return new ApiResponse(200, "/");
                 }
             }
             catch (Exception ex)
@@ -116,7 +117,7 @@ namespace BlazorBoilerplate.Server.Controllers
 
                 var requireConfirmEmail = Convert.ToBoolean(_configuration["BlazorBoilerplate:RequireConfirmedEmail"] ?? "false");
 
-                await _accountService.RegisterNewUserAsync(parameters.UserName, parameters.Email, parameters.Password, requireConfirmEmail);
+                await _accountService.RegisterNewUserAsync(parameters);
 
                 if (requireConfirmEmail)
                 {
@@ -292,6 +293,25 @@ namespace BlazorBoilerplate.Server.Controllers
             return new ApiResponse(200, "Retrieved UserInfo", userInfo); ;
         }
 
+        // POST: api/Account/PhoneAvailabilityCheck/{PhoneNumber}
+        [HttpGet("PhoneAvailabilityCheck/{id}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        public async Task<ApiResponse> PhoneAvailabilityCheck(string id)
+        {
+            BoolDto available = new BoolDto() { Boolean = false };
+            Task<int> t = _db.Users.CountAsync(us => us.PhoneNumber == id);
+            await t;
+            int count = t.Result;
+            if (t.IsCompletedSuccessfully)
+            {
+                if (count == 0)
+                    available.Boolean = true;
+                return new ApiResponse(200, "Retrieved Phone Availability", available); ;
+            }
+            return new ApiResponse(401, "Phone Availability Retrieved Error", available); ;
+        }
+
         private async Task<UserInfoDto> BuildUserInfo()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -378,7 +398,7 @@ namespace BlazorBoilerplate.Server.Controllers
                 var user = new ApplicationUser
                 {
                     UserName = parameters.UserName,
-                    Email = parameters.Email
+                    PhoneNumber = parameters.PhoneNumber
                 };
 
                 user.UserName = parameters.UserName;
@@ -392,7 +412,7 @@ namespace BlazorBoilerplate.Server.Controllers
                     var claimsResult = _userManager.AddClaimsAsync(user, new Claim[]{
                         new Claim(Policies.IsUser,""),
                         new Claim(JwtClaimTypes.Name, parameters.UserName),
-                        new Claim(JwtClaimTypes.Email, parameters.Email),
+                        new Claim(JwtClaimTypes.PhoneNumber, parameters.PhoneNumber),
                         new Claim(JwtClaimTypes.EmailVerified, "false", ClaimValueTypes.Boolean)
                     }).Result;
                 }

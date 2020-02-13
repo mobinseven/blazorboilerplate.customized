@@ -9,11 +9,27 @@ namespace BlazorBoilerplate.Shared.Dto
         [Display(Name = "UserName")]
         public string UserName { get; set; }
 
+        //[Required]
+        //[DataType(DataType.EmailAddress)]
+        //[EmailAddress]
+        //[Display(Name = "Email")]
+        //public string Email { get; set; }
+
         [Required]
-        [DataType(DataType.EmailAddress)]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
+        [DataType(DataType.PhoneNumber)]
+        [Phone]
+        [Display(Name = "Phone")]
+        public string PhoneNumber { get; set; }
+
+        [Required]
+        [DataType(DataType.Text)]
+        [Display(Name = "FirstName")]
+        public string FirstName { get; set; }
+
+        [Required]
+        [DataType(DataType.Text)]
+        [Display(Name = "LastName")]
+        public string LastName { get; set; }
 
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]

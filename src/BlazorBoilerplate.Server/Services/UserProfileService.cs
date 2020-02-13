@@ -12,9 +12,10 @@ namespace BlazorBoilerplate.Server.Services
     public interface IUserProfileService
     {
         Task<ApiResponse> Get(Guid userId);
+
         Task<ApiResponse> Upsert(UserProfileDto userProfile);
-        string GetLastPageVisited(string userName);
     }
+
     public class UserProfileService : IUserProfileService
     {
         private readonly ApplicationDbContext _db;
@@ -24,22 +25,6 @@ namespace BlazorBoilerplate.Server.Services
         {
             _db = db;
             _autoMapper = autoMapper;
-        }
-
-        public string GetLastPageVisited(string userName)
-        {
-            string lastPageVisited = "/dashboard";
-            var userProfile = from userProf in _db.UserProfiles
-                              join user in _db.Users on userProf.UserId equals user.Id
-                              where user.UserName == userName
-                              select userProf;
-
-            if (userProfile.Any())
-            {
-                lastPageVisited = !String.IsNullOrEmpty(userProfile.First().LastPageVisited) ? userProfile.First().LastPageVisited : lastPageVisited;
-            }
-
-            return lastPageVisited;
         }
 
         public async Task<ApiResponse> Get(Guid userId)
@@ -59,10 +44,6 @@ namespace BlazorBoilerplate.Server.Services
             else
             {
                 UserProfile profile = profileQuery.First();
-                userProfile.Count = profile.Count;
-                userProfile.IsNavOpen = profile.IsNavOpen;
-                userProfile.LastPageVisited = profile.LastPageVisited;
-                userProfile.IsNavMinified = profile.IsNavMinified;
                 userProfile.UserId = userId;
             }
 
@@ -79,10 +60,6 @@ namespace BlazorBoilerplate.Server.Services
                     UserProfile profile = profileQuery.First();
                     //_autoMapper.Map<UserProfileDto, UserProfile>(userProfileDto, profile);
 
-                    profile.Count = userProfileDto.Count;
-                    profile.IsNavOpen = userProfileDto.IsNavOpen;
-                    profile.LastPageVisited = userProfileDto.LastPageVisited;
-                    profile.IsNavMinified = userProfileDto.IsNavMinified;
                     profile.LastUpdatedDate = DateTime.Now;
                     _db.UserProfiles.Update(profile);
                 }
@@ -94,10 +71,6 @@ namespace BlazorBoilerplate.Server.Services
                     UserProfile profile = new UserProfile
                     {
                         UserId = userProfileDto.UserId,
-                        Count = userProfileDto.Count,
-                        IsNavOpen = userProfileDto.IsNavOpen,
-                        LastPageVisited = userProfileDto.LastPageVisited,
-                        IsNavMinified = userProfileDto.IsNavMinified,
                         LastUpdatedDate = DateTime.Now
                     };
                     _db.UserProfiles.Add(profile);

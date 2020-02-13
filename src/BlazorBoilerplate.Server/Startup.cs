@@ -239,12 +239,17 @@ namespace BlazorBoilerplate.Server
                 options.Lockout.MaxFailedAccessAttempts = 10;
                 options.Lockout.AllowedForNewUsers = true;
 
-                // Require Confirmed Email User settings
-                if (Convert.ToBoolean(Configuration["BlazorBoilerplate:RequireConfirmedEmail"] ?? "false"))
-                {
-                    options.User.RequireUniqueEmail = false;
-                    options.SignIn.RequireConfirmedEmail = true;
-                }
+                #region Customized
+
+                options.User.RequireUniqueEmail = false;
+                //// Require Confirmed Email User settings
+                //if (Convert.ToBoolean(Configuration["BlazorBoilerplate:RequireConfirmedEmail"] ?? "false"))
+                //{
+                //    options.User.RequireUniqueEmail = false;
+                //    options.SignIn.RequireConfirmedEmail = true;
+                //}
+
+                #endregion Customized
             });
 
             services.Configure<CookiePolicyOptions>(options =>
@@ -431,7 +436,7 @@ namespace BlazorBoilerplate.Server
             app.UseStaticFiles();
 
 #if ClientSideBlazor
-            app.UseClientSideBlazorFiles<Client.Startup>();
+            app.UseClientSideBlazorFiles<Client.Program>();
 #endif
 
             app.UseRouting();
@@ -458,7 +463,7 @@ namespace BlazorBoilerplate.Server
                 endpoints.MapHub<Hubs.ChatHub>("/chathub");
 
 #if ClientSideBlazor
-                endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index_csb.html");
+                endpoints.MapFallbackToClientSideBlazor<Client.Program>("index_csb.html");
 #else
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/index_ssb");

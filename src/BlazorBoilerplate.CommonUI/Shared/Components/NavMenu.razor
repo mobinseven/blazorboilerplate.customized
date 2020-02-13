@@ -4,42 +4,52 @@
 @inject AuthenticationStateProvider authStateProvider
 @inject AppState appState
 @implements IDisposable
+<div class="row">
+    <div class="col-2"></div>
+    <div class="col-8">
+        @if (IsLoggedIn)
+        {
 
-@if (IsLoggedIn)
-{
-
-    <div class="bg-light text-right" id="sidebar-wrapper" dir="rtl" style="margin:0 2rem 8rem 2rem;">
-        <div class="list-group list-group-flush">
-            <button @onclick="@(e=>navigationManager.NavigateTo(" "))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-home fa-fw"></i>پیشگفتار</div></button>
-            @*<button @onclick="@(e=>navigationManager.NavigateTo("todo_list"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-list-alt fa-fw"></i>&nbsp;فهرست کارها</div></button>*@
-            <button @onclick="@(e=>navigationManager.NavigateTo("log"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-eye fa-fw"></i>&nbsp;گزارش سامانه</div></button>
-            @*<button @onclick="@(e=>navigationManager.NavigateTo("dashboard"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-tachometer fa-fw"></i>پیشخوان</div></button>*@
-            @*<button @onclick="@(e=>navigationManager.NavigateTo("admin/users"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-users fa-fw"></i>کاربران</div></button>*@
-            @*<button @onclick="@(e=>navigationManager.NavigateTo("admin/roles"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-key fa-fw"></i>دسترسی‌ها</div></button>*@
-            <button @onclick="@(e=>navigationManager.NavigateTo("forum"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-comments fa-fw"></i>پیام‌رسان</div></button>
-            <button @onclick="@(e=>navigationManager.NavigateTo("account/profile"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-user-circle fa-fw"></i>کاربر: @userInfo.UserName</div></button>
-            <button @onclick="@(e=>LogoutClick())" href="@navigationManager.ToAbsoluteUri(" ").AbsoluteUri" class="list-group-item btn btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-sign-out fa-fw"></i>پایان کار با برنامه</div></button>
-        </div>
+            <div class="bg-light text-right" id="sidebar-wrapper" dir="rtl" style="margin:0 2rem 8rem 2rem;">
+                <div class="list-group list-group-flush">
+                    <button @onclick="@(e=>navigationManager.NavigateTo(" "))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-home fa-fw"></i>پیشگفتار</div></button>
+                    @*<button @onclick="@(e=>navigationManager.NavigateTo("todo_list"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-list-alt fa-fw"></i>&nbsp;فهرست کارها</div></button>*@
+                    <button @onclick="@(e=>navigationManager.NavigateTo("log"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-eye fa-fw"></i>&nbsp;گزارش سامانه</div></button>
+                    @*<button @onclick="@(e=>navigationManager.NavigateTo("dashboard"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-tachometer fa-fw"></i>پیشخوان</div></button>*@
+                    @*<button @onclick="@(e=>navigationManager.NavigateTo("admin/users"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-users fa-fw"></i>کاربران</div></button>*@
+                    @*<button @onclick="@(e=>navigationManager.NavigateTo("admin/roles"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-key fa-fw"></i>دسترسی‌ها</div></button>*@
+                    <button @onclick="@(e=>navigationManager.NavigateTo("forum"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-comments fa-fw"></i>پیام‌رسان</div></button>
+                    <button @onclick="@(e=>navigationManager.NavigateTo("account/profile"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-user-circle fa-fw"></i>کاربر: @userInfo.FirstName</div></button>
+                    <button @onclick="@(e=>LogoutClick())" href="@navigationManager.ToAbsoluteUri(" ").AbsoluteUri" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-sign-out fa-fw"></i>پایان کار با برنامه</div></button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="container-md">
+                <EditForm Model="@loginParameters" OnValidSubmit="@SubmitLogin">
+                    <div class="form-group">
+                        <input type="text" @bind="@loginParameters.UserName" Label="همراه" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" @bind="@loginParameters.Password" Label="گذرواژه" class="form-control">
+                    </div>
+                    <div class="form-group form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" @bind="@loginParameters.RememberMe" id="remember">
+                        <label class="form-check-label" for="remember">
+                            <span class="badge badge-light">مرا به یاد بسپار</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block mb-3">درون شو</button>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                </EditForm>
+                <button @onclick="@(e=>navigationManager.NavigateTo("account/phoneverification"))" class="btn btn-primary btn-block mb-3"><div>ثبت نام</div></button>
+            </div>
+        }
     </div>
-}
-else
-{
-    <EditForm Model="@loginParameters" OnValidSubmit="@SubmitLogin">
-        <div class="form-group">
-            <input type="text" @bind="@loginParameters.UserName" Label="نام کاربری" class="form-control">
-        </div>
-        <div class="form-group">
-            <input type="password" @bind="@loginParameters.Password" Label="گذرواژه" class="form-control">
-        </div>
-        <div class="form-group form-check">
-            <input type="checkbox" class="form-check-input" @bind="@loginParameters.RememberMe">
-            <label class="form-check-label" for="exampleCheck1">مرا به یاد بسپار</label>
-        </div>
-        <button type="submit" class="btn btn-primary">درون شو</button>
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-    </EditForm>
-}
+    <div class="col-2"></div>
+</div>
 @code {
     string navigateTo = "";
     bool forgotPasswordToggle = false;
@@ -86,7 +96,7 @@ else
     async void LogoutClick()
     {
         await ((IdentityAuthenticationStateProvider)authStateProvider).Logout();
-        //navigationManager.NavigateTo("/account/login");
+        navigationManager.NavigateTo(" ");
     }
     async Task SubmitLogin()
     {

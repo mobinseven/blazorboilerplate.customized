@@ -11,20 +11,20 @@
                 <h1>@AppInfo.AppTitle</h1>
             </div>
         </header>
-        <NavMenu /> @* TODO: Close nav when clicked*@
+        <NavMenu /> @* TODO: Close nav when clicked *@
     </nav>
 </aside>
 <section id="container" class="container-fluid">
     @Body
 </section>
-<footer style="position: fixed;bottom: 1px;right: 1px;z-index:99;">
+<footer style="position: fixed;bottom: 10px;right: 10px;z-index:99;">
     <div>
-        <button class="btn_icon" @onclick="@(e=>appState.ToggleNavState())">
+        <a role="button" href="javascript:;" class="btn_icon" @onclick="@(e=>appState.ToggleNavState())">
             <span class="fa-stack">
                 <i class="fa fa-circle fa-stack-2x"></i>
                 <i id="NavButton" class="fa fa-bars fa-stack-1x fa-inverse"></i>
             </span>
-        </button>
+        </a>
     </div>
 </footer>
 

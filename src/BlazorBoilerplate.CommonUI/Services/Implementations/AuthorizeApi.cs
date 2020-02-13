@@ -70,7 +70,9 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
         public async Task<ApiResponseDto> Logout()
         {
 #if ServerSideBlazor
-            List<string> cookies = _httpClient.DefaultRequestHeaders?.GetValues("Cookie")?.ToList();
+            List<string> cookies = null;
+            if (_httpClient.DefaultRequestHeaders.TryGetValues("Cookie", out IEnumerable<string> cookieEntries))
+                cookies = cookieEntries.ToList();
 #endif
 
             var resp = await _httpClient.PostJsonAsync<ApiResponseDto>("api/Account/Logout", null);
