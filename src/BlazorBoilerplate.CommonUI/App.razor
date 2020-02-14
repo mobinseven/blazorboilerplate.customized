@@ -24,9 +24,9 @@
         </CascadingAuthenticationState>
     </NotFound>
 </Router>
-
+@implements IDisposable
 @code
-{
+    {
     [Inject] HttpClient _httpClient { get; set; }
     [Inject] NavigationManager _navigationManager { get; set; }
 
@@ -42,7 +42,7 @@
 
 #if ServerSideBlazor
         // likely user refreshed page, we need to grab the cookies if they exist and pass it to the HttpClient for this request
-        if (_http != null && _http.HttpContext.Request.Cookies.Any())
+        if (_http != null && _http.HttpContext != null && _http.HttpContext.Request.Cookies.Any())
         {
             var cks = new List<string>();
 
@@ -54,5 +54,8 @@
             _httpClient.DefaultRequestHeaders.Add("Cookie", String.Join(';', cks));
         }
 #endif
+    }
+    public void Dispose()
+    {
     }
 }

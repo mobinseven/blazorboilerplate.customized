@@ -289,12 +289,7 @@ namespace BlazorBoilerplate.Server
                 };
             });
 
-            #region Customized
-
             services.AddControllers().AddNewtonsoftJson();
-
-            #endregion Customized
-
             services.AddSignalR();
 
             #region Customized

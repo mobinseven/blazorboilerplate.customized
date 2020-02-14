@@ -4,13 +4,12 @@
 @inject AuthenticationStateProvider authStateProvider
 @inject AppState appState
 @implements IDisposable
-<div class="row">
-    <div class="col-2"></div>
-    <div class="col-8">
-        @if (IsLoggedIn)
-        {
-
-            <div class="bg-light text-right" id="sidebar-wrapper" dir="rtl" style="margin:0 2rem 8rem 2rem;">
+<div class="text-right" id="sidebar-wrapper" dir="rtl" style="margin:0 .5rem 6rem .5rem;">
+    <div class="row">
+        <div class="col-md-4"></div>
+        <div class="col-md-4 col">
+            @if (IsLoggedIn)
+            {
                 <div class="list-group list-group-flush">
                     <button @onclick="@(e=>navigationManager.NavigateTo(" "))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-home fa-fw"></i>پیشگفتار</div></button>
                     @*<button @onclick="@(e=>navigationManager.NavigateTo("todo_list"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-list-alt fa-fw"></i>&nbsp;فهرست کارها</div></button>*@
@@ -22,11 +21,9 @@
                     <button @onclick="@(e=>navigationManager.NavigateTo("account/profile"))" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-user-circle fa-fw"></i>کاربر: @userInfo.FirstName</div></button>
                     <button @onclick="@(e=>LogoutClick())" href="@navigationManager.ToAbsoluteUri(" ").AbsoluteUri" class="list-group-item btn-outline-dark d-flex justify-content-between"><div><i class="fa fa-sign-out fa-fw"></i>پایان کار با برنامه</div></button>
                 </div>
-            </div>
-        }
-        else
-        {
-            <div class="container-md">
+            }
+            else
+            {
                 <EditForm Model="@loginParameters" OnValidSubmit="@SubmitLogin">
                     <div class="form-group">
                         <input type="text" @bind="@loginParameters.UserName" Label="همراه" class="form-control">
@@ -45,10 +42,10 @@
                     <ValidationSummary />
                 </EditForm>
                 <button @onclick="@(e=>navigationManager.NavigateTo("account/phoneverification"))" class="btn btn-primary btn-block mb-3"><div>ثبت نام</div></button>
-            </div>
-        }
+            }
+        </div>
+        <div class="col-md-4"></div>
     </div>
-    <div class="col-2"></div>
 </div>
 @code {
     string navigateTo = "";
