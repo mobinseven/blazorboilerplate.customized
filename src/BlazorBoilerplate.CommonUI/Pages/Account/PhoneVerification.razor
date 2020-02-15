@@ -1,0 +1,170 @@
+﻿@page "/account/phoneverification"
+
+@using  BlazorBoilerplate.Shared.Dto
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authStateProvider
+@inject HttpClient Http
+
+@using RestSharp
+@using System.ComponentModel.DataAnnotations
+<h4>کاربر جدید</h4>
+@if (!Verified)
+{
+    @if (!Sent)
+    {
+        <h5>شماره همراهتان را وارد کنید:</h5>
+        <EditForm Model="@PhoneNumber" OnValidSubmit="@PhoneChack">
+            <div dir="ltr" class="input-group mb-3">
+                <input @bind="@PhoneNumber" class="form-control @PhoneValidClass" Label="Phone" placeholder="09XXXXXXXXX" />
+                <div class="input-group-append">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa fa-phone fa-fw"></i></span>
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="form-group d-flex justify-content-end">
+                    <button Type="submit" class="btn btn-primary">
+                        ارسال کد
+                        @if (Sending)
+                        {
+                            <div class="spinner-border text-light" role="status">
+                                <span class="sr-only">...</span>
+                            </div>
+                        }
+                    </button>
+                </div>
+            </div>
+            <DataAnnotationsValidator />
+        </EditForm>
+    }
+    else
+    {
+        <h5> کد فرستاده شده به شماره همراهتان را وارد کنید:</h5>
+        <EditForm Model="@VerificationCode" OnValidSubmit="@VerifyVerificationCode">
+
+            <div dir="ltr" class="input-group mb-3">
+                <input @bind="@VerificationCode" class="form-control" Label="Verification Code" placeholder="XXXXXX" />
+                <div class="input-group-append">
+                    <span class="input-group-text" id="basic-addon1"><i class="fa fa-hashtag fa-fw"></i></span>
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <div class="form-group d-flex justify-content-end">
+                    <button Type="submit" class="btn btn-outline-success">
+                        گرفتن تاییدیه
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    }
+}
+else
+{
+    <h5 class="text-success"><i class="fa fa-check fa-fw"></i> شماره همراهتان با موفقیت تایید شد.</h5>
+    <h5>فرم زیر را تکمیل کنید:</h5>
+    <EditForm Model="@registerParameters" OnValidSubmit="@RegisterUser">
+        <div class="input-group mb-3">
+            <div class="form-group">
+                <input @bind="@registerParameters.UserName" class="form-control" Label="User Name" hidden disabled />
+            </div>
+        </div>
+        <div class="input-group mb-3">
+
+            <div class="form-group">
+                <input @bind="@registerParameters.PhoneNumber" class="form-control" Label="PhoneNumber" disabled />
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="form-group">
+                <input @bind="@registerParameters.FirstName" class="form-control" Label="First Name" placeholder="First Name" />
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="form-group">
+                <input @bind="@registerParameters.LastName" class="form-control" Label="Last Name" placeholder="Last Name" />
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="form-group">
+                <input @bind="@registerParameters.Password" class="form-control" Label="Password" Type="password" placeholder="Password" />
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="form-group">
+                <input @bind="@registerParameters.PasswordConfirm" class="form-control" Label="Password Confirmation" placeholder="Password Confirmation" Type="password" />
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="form-group d-flex justify-content-end">
+                <button class="btn btn-success" Type="submit">ساختن حساب کاربری</button>
+            </div>
+        </div>
+    </EditForm>
+}
+@code {
+    string PhoneValidClass = "";
+    [Required]
+    [DataType(DataType.PhoneNumber)]
+    [Phone]
+    [Display(Name = "Phone")]
+    public string PhoneNumber { get; set; } = "";
+    public string Code = "";
+    public string VerificationCode { get; set; } = "";
+    bool Sending = false;
+    bool Sent = false;
+    bool Verified = false;
+    bool PhoneNumberAvailable = false;
+    async Task PhoneChack()
+    {
+        PhoneNumber = PhoneNumber.PersianToEnglish();
+        var apiResponse = await Http.GetJsonAsync<ApiResponseDto>("api/Account/PhoneAvailabilityCheck/" + PhoneNumber);
+        BoolDto Available = Newtonsoft.Json.JsonConvert.DeserializeObject<BoolDto>(apiResponse.Result.ToString());
+        PhoneNumberAvailable = Available.Boolean;
+        if (PhoneNumberAvailable)
+        {
+            PhoneValidClass = "is-valid";
+            await SendVerificationCode();
+        }
+        else PhoneValidClass = "is-invalid";
+    }
+    async Task SendVerificationCode()
+    {
+        Sending = true;
+        Random r = new Random();
+        int rInt = r.Next(100000, 999999);
+        Code = rInt.ToString();
+        var client = new RestClient("https://api.ghasedak.io/v2/verification/send/simple");
+        var request = new RestRequest(Method.POST);
+        request.AddHeader("apikey", "b9b69fbfd7a1ae22248dc8ec3831080495d11a14b50c63b839ab999806d56426");
+        request.AddParameter("receptor", PhoneNumber);
+        request.AddParameter("type", 1);
+        request.AddParameter("template", "Test");
+        request.AddParameter("param1", Code); ;
+        IRestResponse response = await client.ExecuteAsync(request);
+        Sending = false;
+        if (response.IsSuccessful)
+        {
+            Sent = true;
+        }
+    }
+
+    async Task VerifyVerificationCode()
+    {
+        VerificationCode = VerificationCode.PersianToEnglish();
+        if (Code == VerificationCode)
+        {
+            Verified = true;
+            registerParameters.PhoneNumber = PhoneNumber;
+            registerParameters.UserName = PhoneNumber;
+        }
+    }
+
+    RegisterDto registerParameters { get; set; } = new RegisterDto();
+    async Task RegisterUser()
+    {
+        if (registerParameters.Password == registerParameters.PasswordConfirm)
+        {
+            await ((IdentityAuthenticationStateProvider)authStateProvider).Register(registerParameters);
+            navigationManager.NavigateTo("");
+        }
+    }
+}

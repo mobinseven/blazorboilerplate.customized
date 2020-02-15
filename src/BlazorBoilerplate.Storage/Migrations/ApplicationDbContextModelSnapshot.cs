@@ -222,18 +222,6 @@ namespace BlazorBoilerplate.Storage.Migrations
                         .HasColumnType("bigint")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("Count")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsNavMinified")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsNavOpen")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastPageVisited")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("LastUpdatedDate")
                         .HasColumnType("datetime2");
 

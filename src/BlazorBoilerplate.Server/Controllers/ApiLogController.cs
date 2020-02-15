@@ -10,6 +10,7 @@ namespace BlazorBoilerplate.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize]
     public class ApiLogController : ControllerBase
     {
         private readonly IApiLogManager _apiLogManager;
@@ -21,7 +22,6 @@ namespace BlazorBoilerplate.Server.Controllers
 
         // GET: api/ApiLog
         [HttpGet]
-        [AllowAnonymous]
         public async Task<ApiResponse> Get()
         =>  await _apiLogManager.Get();
 

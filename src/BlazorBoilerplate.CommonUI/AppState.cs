@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 
 using BlazorBoilerplate.CommonUI.Services.Contracts;
 using BlazorBoilerplate.Shared.Dto;
-using BlazorBoilerplate.Shared.Dto.Account;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Newtonsoft.Json;
 
 namespace BlazorBoilerplate.CommonUI
@@ -11,6 +12,9 @@ namespace BlazorBoilerplate.CommonUI
     public class AppState
     {
         public event Action OnChange;
+
+        public IJSRuntime jsRuntime { get; set; }
+
         private readonly IUserProfileApi _userProfileApi;
 
         public UserProfileDto UserProfile { get; set; }
@@ -20,22 +24,36 @@ namespace BlazorBoilerplate.CommonUI
             _userProfileApi = userProfileApi;
         }
 
-        public bool IsNavOpen
+        public bool IsNavOpen { get; set; } = false;
+
+        public async void ToggleNavState()
         {
-            get
+            IsNavOpen = !IsNavOpen;
+            if (!IsNavOpen)
             {
-                if (UserProfile == null)
-                {
-                    return true;
-                }
-                return UserProfile.IsNavOpen;
+                await jsRuntime.InvokeVoidAsync("CloseNav");
             }
-            set
+            else
             {
-                UserProfile.IsNavOpen = value;
+                await jsRuntime.InvokeVoidAsync("OpenNav");
             }
         }
-        public bool IsNavMinified { get; set; }
+
+        //public bool IsNavOpen
+        //{
+        //    get
+        //    {
+        //        if (UserProfile == null)
+        //        {
+        //            return true;
+        //        }
+        //        return UserProfile.IsNavOpen;
+        //    }
+        //    set
+        //    {
+        //        UserProfile.IsNavOpen = value;
+        //    }
+        //}
 
         public async Task UpdateUserProfile()
         {
@@ -58,37 +76,37 @@ namespace BlazorBoilerplate.CommonUI
             return new UserProfileDto();
         }
 
-        public async Task UpdateUserProfileCount(int count)
-        {
-            UserProfile.Count = count;
-            await UpdateUserProfile();
-            NotifyStateChanged();
-        }
+        //public async Task UpdateUserProfileCount(int count)
+        //{
+        //    UserProfile.Count = count;
+        //    await UpdateUserProfile();
+        //    NotifyStateChanged();
+        //}
 
-        public async Task<int> GetUserProfileCount()
-        {
-            if (UserProfile == null)
-            {
-                UserProfile = await GetUserProfile();
-                return UserProfile.Count;
-            }
+        //public async Task<int> GetUserProfileCount()
+        //{
+        //    if (UserProfile == null)
+        //    {
+        //        UserProfile = await GetUserProfile();
+        //        return UserProfile.Count;
+        //    }
 
-            return UserProfile.Count;
-        }
+        //    return UserProfile.Count;
+        //}
 
-        public async Task SaveLastVisitedUri(string uri)
-        {
-            if (UserProfile ==  null)
-            {
-                UserProfile = await GetUserProfile();
-            }
-            if (UserProfile != null)
-            {
-                UserProfile.LastPageVisited = uri;
-                await UpdateUserProfile();
-                NotifyStateChanged();
-            }
-        }
+        //public async Task SaveLastVisitedUri(string uri)
+        //{
+        //    if (UserProfile ==  null)
+        //    {
+        //        UserProfile = await GetUserProfile();
+        //    }
+        //    if (UserProfile != null)
+        //    {
+        //        UserProfile.LastPageVisited = uri;
+        //        await UpdateUserProfile();
+        //        NotifyStateChanged();
+        //    }
+        //}
 
         private void NotifyStateChanged() => OnChange?.Invoke();
     }

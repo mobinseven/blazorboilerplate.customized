@@ -14,20 +14,14 @@
     <link rel="icon" type="image/x-icon" href="_content/BlazorBoilerplate.CommonUI/images/favicon.ico">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="_content/BlazorBoilerplate.CommonUI/images/favicon.ico" />
 
-    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/css/font-awesome.min.css" rel="stylesheet" />
     <link href="_content/BlazorBoilerplate.CommonUI/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="_content/BlazorBoilerplate.CommonUI/css/site.css" rel="stylesheet" />
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55161075-2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'UA-55161075-2');
-    </script>
-
+    <link href="_content/BlazorBoilerplate.CommonUI/css/fonts.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/css/StyleSheet.css" rel="stylesheet" />
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/Title.js"></script>
 </head>
 <body>
     <app>
@@ -36,22 +30,48 @@
             </div>
         </div>
         <div class="loading-container">
-            <img src="_content/BlazorBoilerplate.CommonUI/images/blazorboilerplate.svg" alt="Loading" title="Loading Blazor Boilerplate" /><br />
-            Loading Blazor Boilerplate (CSB)...
+            <div class="spinner-border" style="width: 4rem; height: 4rem; vertical-align: middle !important" role="status"></div>
         </div>
     </app>
-
-    <div id="blazor-error-ui">
-        <i class="material-icons">error</i>
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+    <div id="components-reconnect-modal" class="my-reconnect-modal components-reconnect-hide">
+        <div class="show">
+            <p>
+                پایگاه داده در دسترس نیست.
+            </p>
+        </div>
+        <div class="failed">
+            <p>
+                برنامه باید دوباره بارگذاری شود.
+                <a href="">بازنشانی<i class="fa fa-refresh"></i></a>
+            </p>
+        </div>
+        <div class="refused">
+            <p>
+                پایگاه داده در دسترس نیست.
+            </p>
+        </div>
     </div>
-
+    <!-- https://stackoverflow.com/questions/58404533/how-can-i-change-the-could-not-reconnect-to-the-server-text-in-blazor -->
+    <!-- https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1#reflect-the-connection-state-in-the-ui -->
     <script src="_framework/blazor.webassembly.js"></script>
     <!-- load remaining JS after blazor boot loads -->
-    <script src="_content/MatBlazor/dist/matBlazor.js"></script>
     <script src="_content/BlazorBoilerplate.CommonUI/javascript/signalr.min.js"></script>
     <script src="_content/BlazorBoilerplate.CommonUI/javascript/chatClient.js"></script>
+
+    <link href="_content/BlazorBoilerplate.CommonUI/css/Messaging.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/css/persian-datepicker.min.css" rel="stylesheet" />
+    <link href="_content/BlazorBoilerplate.CommonUI/other/DataTables/datatables.min.css" rel="stylesheet" type="text/css" />
+
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/ScrollPosition.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/jquery-3.4.1.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/moment-with-locales.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/moment-jalaali.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/persian-date.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/persian-datepicker.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/hammer.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/other/DataTables/datatables.min.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/DataTable.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/SvgLogoLoadingAnimation.js"></script>
+    <script src="_content/BlazorBoilerplate.CommonUI/javascript/SideNav.js"></script>
 </body>
 </html>

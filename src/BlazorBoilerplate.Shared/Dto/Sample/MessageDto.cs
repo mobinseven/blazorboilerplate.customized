@@ -12,25 +12,28 @@ namespace BlazorBoilerplate.Shared.Dto.Sample
 
         public bool Mine { get; set; }
 
-        public MessageDto() { }
+        public MessageDto()
+        {
+        }
 
-        public MessageDto(int id, string userName, string text, bool mine)
+        public MessageDto(int id, string userName, string text, DateTime when, bool mine)
         {
             Id = id;
             UserName = userName;
             Text = text;
             Mine = mine;
+            When = when;
         }
 
         /// <summary>
         /// Determine CSS classes to use for message div
         /// TODO: disambiguate between your and other members
         /// </summary>
-        public string CSS
+        public bool Incoming
         {
             get
             {
-                return Mine ? "sent" : "received";
+                return !Mine;
             }
         }
     }

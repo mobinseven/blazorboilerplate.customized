@@ -2,14 +2,12 @@
 
 // We cannot pass Javascript objects back to Blazor so this library will store
 // each connection created using a key in the `connections` object.
-// 
+//
 var connections = {};
 
 // v0.5.0 interop changes - use a window.{object} as a container
 //
 window.ChatClient = {
-
-
     // key: key to use to access the SignalR client created
     // hubUrl: url to the chat hub
     // assembly:   the assembly containing the method
@@ -27,11 +25,11 @@ window.ChatClient = {
         // console.log("Connection created, adding receive handler");
 
         // create an inbound message handler for the "ReceiveMessage" event
-        connection.on("ReceiveMessage", (id, username, message) => {
+        connection.on("ReceiveMessage", (id, username, message, when) => {
             // console.log("Connection message received for " + key + " from " + username);
-            // invoke Blazor dotnet method 
+            // invoke Blazor dotnet method
             // we pass the key in so we know which client received the message
-            DotNet.invokeMethodAsync(assembly, method, key, "ReceiveMessage", id, username, message);
+            DotNet.invokeMethodAsync(assembly, method, key, "ReceiveMessage", id, username, message, when);
         });
 
         // start the connection
@@ -44,7 +42,7 @@ window.ChatClient = {
         return result;
     },
 
-    // 
+    //
     // function called when Blazor client wishes to register username
     //
     Register: function (key) {
@@ -56,7 +54,7 @@ window.ChatClient = {
         return connection.invoke("Register");
     },
 
-    // 
+    //
     // function called when Blazor client wishes to send a message via SignalR
     //
     Send: function (key, message) {
@@ -68,7 +66,7 @@ window.ChatClient = {
         return connection.invoke("SendMessage", message);
     },
 
-    // 
+    //
     // function called when Blazor client wishes to delete a message via SignalR
     //
     Delete: function (key, id) {
@@ -79,7 +77,6 @@ window.ChatClient = {
         // send message (async)
         return connection.invoke("DeleteMessage", id);
     },
-
 
     //
     // close and dispose of a connection

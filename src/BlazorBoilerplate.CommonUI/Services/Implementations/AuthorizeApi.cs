@@ -1,32 +1,96 @@
-﻿using System;
+﻿using BlazorBoilerplate.CommonUI.Services.Contracts;
+using BlazorBoilerplate.Shared.Dto;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json;
-using BlazorBoilerplate.CommonUI.Services.Contracts;
-using BlazorBoilerplate.Shared.Dto;
-using System.Collections.Generic;
-using BlazorBoilerplate.Shared.Dto.Account;
 
 namespace BlazorBoilerplate.CommonUI.Services.Implementations
 {
     public class AuthorizeApi : IAuthorizeApi
     {
         private readonly HttpClient _httpClient;
+        private readonly NavigationManager _navigationManager;
+        private readonly IJSRuntime _jsRuntime;
 
-        public AuthorizeApi(HttpClient httpClient)
+        public AuthorizeApi(NavigationManager navigationManager, HttpClient httpClient, IJSRuntime jsRuntime)
         {
+            _navigationManager = navigationManager;
             _httpClient = httpClient;
+            _jsRuntime = jsRuntime;
         }
 
         public async Task<ApiResponseDto> Login(LoginDto loginParameters)
         {
-            return await _httpClient.PostJsonAsync<ApiResponseDto>("api/Account/Login", loginParameters);
+            ApiResponseDto resp;
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/Account/Login")
+            {
+                Content = new StringContent(JsonConvert.SerializeObject(loginParameters))
+            };
+            httpRequestMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+
+            using (HttpResponseMessage response = await _httpClient.SendAsync(httpRequestMessage))
+            {
+                response.EnsureSuccessStatusCode();
+
+#if ServerSideBlazor
+
+                if (response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> cookieEntries))
+                {
+                    Uri uri = response.RequestMessage.RequestUri;
+                    CookieContainer cookieContainer = new CookieContainer();
+
+                    foreach (string cookieEntry in cookieEntries)
+                    {
+                        cookieContainer.SetCookies(uri, cookieEntry);
+                    }
+
+                    IEnumerable<Cookie> cookies = cookieContainer.GetCookies(uri).Cast<Cookie>();
+
+                    foreach (Cookie cookie in cookies)
+                    {
+                        await _jsRuntime.InvokeVoidAsync("jsInterops.setCookie", cookie.ToString());
+                    }
+                }
+#endif
+
+                string content = await response.Content.ReadAsStringAsync();
+                resp = JsonConvert.DeserializeObject<ApiResponseDto>(content);
+            }
+
+            return resp;
         }
 
         public async Task<ApiResponseDto> Logout()
         {
-            return await _httpClient.PostJsonAsync<ApiResponseDto>("api/Account/Logout", null);
+#if ServerSideBlazor
+            List<string> cookies = null;
+            if (_httpClient.DefaultRequestHeaders.TryGetValues("Cookie", out IEnumerable<string> cookieEntries))
+                cookies = cookieEntries.ToList();
+#endif
+
+            var resp = await _httpClient.PostJsonAsync<ApiResponseDto>("api/Account/Logout", null);
+
+#if ServerSideBlazor
+            if (resp.StatusCode == 200 && cookies != null && cookies.Any())
+            {
+                _httpClient.DefaultRequestHeaders.Remove("Cookie");
+
+                foreach (string cookie in cookies[0].Split(';'))
+                {
+                    string[] cookieParts = cookie.Split('=');
+                    await _jsRuntime.InvokeVoidAsync("jsInterops.removeCookie", cookieParts[0]);
+                }
+            }
+#endif
+
+            return resp;
         }
 
         public async Task<ApiResponseDto> Create(RegisterDto registerParameters)

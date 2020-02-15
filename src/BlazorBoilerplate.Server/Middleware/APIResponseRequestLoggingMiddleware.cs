@@ -1,5 +1,7 @@
 ﻿using BlazorBoilerplate.Server.Middleware.Extensions;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
+using BlazorBoilerplate.Server.Models;
+using BlazorBoilerplate.Server.Services;
 using IdentityModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -18,10 +21,9 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
+
 //using System.Text.Json; //Does not work for this middleware, at least as in preview
 using System.Threading.Tasks;
-using BlazorBoilerplate.Server.Managers;
-using BlazorBoilerplate.Shared.DataModels;
 
 namespace BlazorBoilerplate.Server.Middleware
 {
@@ -31,8 +33,8 @@ namespace BlazorBoilerplate.Server.Middleware
     public class APIResponseRequestLoggingMiddleware
     {
         private readonly RequestDelegate _next;
-        ILogger<APIResponseRequestLoggingMiddleware> _logger;
-        private IApiLogManager _apiLogManager;
+        private ILogger<APIResponseRequestLoggingMiddleware> _logger;
+        private IApiLogService _apiLogService;
         private readonly Func<object, Task> _clearCacheHeadersDelegate;
         private readonly bool _enableAPILogging;
         private List<string> _ignorePaths = new List<string>();
@@ -45,10 +47,10 @@ namespace BlazorBoilerplate.Server.Middleware
             _ignorePaths = configuration.GetSection("BlazorBoilerplate:ApiLogging:IgnorePaths").Get<List<string>>();
         }
 
-        public async Task Invoke(HttpContext httpContext, IApiLogManager apiLogManager, ILogger<APIResponseRequestLoggingMiddleware> logger, UserManager<ApplicationUser> userManager)
+        public async Task Invoke(HttpContext httpContext, IApiLogService apiLogService, ILogger<APIResponseRequestLoggingMiddleware> logger, UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
-            _apiLogManager = apiLogManager;
+            _apiLogService = apiLogService;
 
             try
             {
@@ -90,6 +92,7 @@ namespace BlazorBoilerplate.Server.Middleware
                             stopWatch.Stop();
 
                             #region Log Request / Response
+
                             //Search the Ignore paths from appsettings to ignore the loggin of certian api paths
                             if (_enableAPILogging && (_ignorePaths.Any(e => !request.Path.StartsWithSegments(new PathString(e.ToLower())))))
                             {
@@ -102,27 +105,28 @@ namespace BlazorBoilerplate.Server.Middleware
                                             ? await userManager.FindByIdAsync(httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Subject).First().Value)
                                             : null;
 
-                                await SafeLog(requestTime,
-                                    stopWatch.ElapsedMilliseconds,
-                                    response.StatusCode,
-                                    request.Method,
-                                    request.Path,
-                                    request.QueryString.ToString(),
-                                    formattedRequest,
-                                    responseBodyContent,
-                                    httpContext.Connection.RemoteIpAddress.ToString(),
-                                    user
-                                    );
+                                    await SafeLog(requestTime,
+                                        stopWatch.ElapsedMilliseconds,
+                                        response.StatusCode,
+                                        request.Method,
+                                        request.Path,
+                                        request.QueryString.ToString(),
+                                        formattedRequest,
+                                        responseBodyContent,
+                                        httpContext.Connection.RemoteIpAddress.ToString(),
+                                        user
+                                        );
                                 }
-                                catch (Exception ex) {
+                                catch (Exception ex)
+                                {
                                     _logger.LogWarning("An Inner Middleware exception occurred on SafeLog: " + ex.Message);
                                 }
                             }
-                            #endregion
+
+                            #endregion Log Request / Response
                         }
                         catch (System.Exception ex)
                         {
-
                             _logger.LogWarning("An Inner Middleware exception occurred: " + ex.Message);
                             await HandleExceptionAsync(httpContext, ex);
                         }
@@ -167,7 +171,6 @@ namespace BlazorBoilerplate.Server.Middleware
                 };
                 code = ex.StatusCode;
                 httpContext.Response.StatusCode = code;
-
             }
             else if (exception is UnauthorizedAccessException)
             {
@@ -260,7 +263,7 @@ namespace BlazorBoilerplate.Server.Middleware
                     apiResponse.StatusCode = code;
                 }
 
-                if ( (apiResponse.Result != null) || (!string.IsNullOrEmpty(apiResponse.Message)) )
+                if ((apiResponse.Result != null) || (!string.IsNullOrEmpty(apiResponse.Message)))
                 {
                     jsonString = JsonConvert.SerializeObject(apiResponse);
                 }
@@ -314,12 +317,14 @@ namespace BlazorBoilerplate.Server.Middleware
 
         private string ConvertToJSONString(int code, object content)
         {
-            return JsonConvert.SerializeObject(new ApiResponse(code, ResponseMessageEnum.Success.GetDescription(), content,  null, "0.6.1"), JSONSettings());
+            return JsonConvert.SerializeObject(new ApiResponse(code, ResponseMessageEnum.Success.GetDescription(), content, null, "0.6.0"), JSONSettings());
         }
+
         private string ConvertToJSONString(ApiResponse apiResponse)
         {
             return JsonConvert.SerializeObject(apiResponse, JSONSettings());
         }
+
         private string ConvertToJSONString(object rawJSON)
         {
             return JsonConvert.SerializeObject(rawJSON, JSONSettings());
@@ -338,6 +343,9 @@ namespace BlazorBoilerplate.Server.Middleware
                 Converters = new List<JsonConverter> { new StringEnumConverter() }
             };
         }
+
+        #region Customized
+
         private async Task SafeLog(DateTime requestTime,
                             long responseMillis,
                             int statusCode,
@@ -350,16 +358,20 @@ namespace BlazorBoilerplate.Server.Middleware
                             ApplicationUser user)
         {
             // Do not log these events login, logout, getuserinfo...
+
             if ((path.ToLower().StartsWith("/api/account/")) ||
-                (path.ToLower().StartsWith("/api/UserProfile/")) )
+                (path.ToLower().StartsWith("/api/UserProfile/"))
+                              || (method.ToLower() == "get" && path.Count(c => c == '/') == 2)// Do not log 'GET all' events like: /api/todo
+                )
             {
                 return;
             }
 
-            if (requestBody.Length > 256)
-            {
-                requestBody = $"(Truncated to 200 chars) {requestBody.Substring(0, 200)}";
-            }
+            //Uncomment if truncation is needed
+            //if (requestBody.Length > 256)
+            //{
+            //    requestBody = $"(Truncated to 200 chars) {requestBody.Substring(0, 200)}";
+            //}
 
             // If the response body was an ApiResponse we should just save the Result object
             if (responseBody.Contains("\"result\":"))
@@ -372,18 +384,28 @@ namespace BlazorBoilerplate.Server.Middleware
                 catch { }
             }
 
-            if (responseBody.Length > 256)
-            {
-                responseBody = $"(Truncated to 200 chars) {responseBody.Substring(0, 200)}";
-            }
+            //Uncomment if truncation is needed
+            //if (responseBody.Length > 256)
+            //{
+            //    responseBody = $"(Truncated to 200 chars) {responseBody.Substring(0, 200)}";
+            //}
 
             if (queryString.Length > 256)
             {
                 queryString = $"(Truncated to 200 chars) {queryString.Substring(0, 200)}";
             }
 
-            // Pass in the context to resolve the instance, and save to a store? 
-            await _apiLogManager.Log(new ApiLogItem
+            if (method.ToUpper() == "PUT")
+            {
+                JObject item = JObject.Parse(requestBody.Substring(requestBody.IndexOf('{')));
+                var resp = await _apiLogService.GetLastGet(path + "/" + item["id"].Value<string>(), user.Id);
+                if (resp != null && resp.StatusCode == 200)
+                {
+                    //ApiLogItem oldItem = JsonConvert.DeserializeObject<ApiLogItem>(resp.Result.ToString());
+                    responseBody = "[" + responseBody + "," + resp.ResponseBody + "]";
+                }
+            }
+            await _apiLogService.Log(new ApiLogItem
             {
                 RequestTime = requestTime,
                 ResponseMillis = responseMillis,
@@ -398,6 +420,8 @@ namespace BlazorBoilerplate.Server.Middleware
             });
         }
 
+        #endregion Customized
+
         private Task ClearCacheHeaders(object state)
         {
             var response = (HttpResponse)state;
@@ -409,6 +433,5 @@ namespace BlazorBoilerplate.Server.Middleware
 
             return Task.CompletedTask;
         }
-
     }
 }

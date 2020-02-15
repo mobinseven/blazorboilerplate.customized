@@ -1,12 +1,11 @@
-﻿using BlazorBoilerplate.Shared.Dto;
+﻿using BlazorBoilerplate.Server.Models;
+using BlazorBoilerplate.Server.Services;
+using BlazorBoilerplate.Shared.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using BlazorBoilerplate.Server.Managers;
-using BlazorBoilerplate.Shared.DataModels;
-using BlazorBoilerplate.Shared.Dto.Sample;
 
 namespace BlazorBoilerplate.Server.Hubs
 {
@@ -15,13 +14,13 @@ namespace BlazorBoilerplate.Server.Hubs
     /// </summary>
     public class ChatHub : Hub
     {
-        private IMessageManager MessageManager { get; set; }
+        private IMessageService MessageService { get; set; }
 
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public ChatHub(IMessageManager messageManager, UserManager<ApplicationUser> userManager)
+        public ChatHub(IMessageService messageService, UserManager<ApplicationUser> userManager)
         {
-            MessageManager = messageManager;
+            MessageService = messageService;
             _userManager = userManager;
         }
 
@@ -33,7 +32,6 @@ namespace BlazorBoilerplate.Server.Hubs
         /// </remarks>
         private static readonly Dictionary<string, string> userLookup = new Dictionary<string, string>();
 
-
         /// <summary>
         /// Deletes a message
         /// </summary>
@@ -41,7 +39,7 @@ namespace BlazorBoilerplate.Server.Hubs
         /// <returns></returns>
         public async Task DeleteMessage(int id)
         {
-            await MessageManager.Delete(id);
+            await MessageService.Delete(id);
         }
 
         /// <summary>
@@ -61,8 +59,13 @@ namespace BlazorBoilerplate.Server.Hubs
                 When = DateTime.UtcNow
             };
 
-            await MessageManager.Create(newMessage);
-            await Clients.All.SendAsync("ReceiveMessage", 0, user.UserName, message);
+            await MessageService.Create(newMessage);
+
+            #region Customized
+
+            await Clients.All.SendAsync("ReceiveMessage", 0, user.UserName, message, newMessage.When);
+
+            #endregion Customized
         }
 
         /// <summary>
@@ -79,7 +82,7 @@ namespace BlazorBoilerplate.Server.Hubs
                 // maintain a lookup of connectionId-to-username
                 userLookup.Add(currentId, username);
                 // re-use existing message for now
-                await Clients.AllExcept(currentId).SendAsync("ReceiveMessage", 0, username, $"{username} joined the chat");
+                await Clients.AllExcept(currentId).SendAsync("ReceiveMessage", 0, username, $"{username} joined the chat", DateTime.Now);
             }
         }
 
@@ -90,11 +93,11 @@ namespace BlazorBoilerplate.Server.Hubs
         public override Task OnConnectedAsync()
         {
             Console.WriteLine("Connected");
-            List<MessageDto> messages = MessageManager.GetList();
+            List<MessageDto> messages = MessageService.GetList();
 
             foreach (var message in messages)
             {
-                Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", message.Id, message.UserName, message.Text);
+                Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", message.Id, message.UserName, message.Text, message.When);
             }
 
             return base.OnConnectedAsync();
@@ -113,7 +116,7 @@ namespace BlazorBoilerplate.Server.Hubs
             if (userLookup.TryGetValue(id, out string username))
             {
                 userLookup.Remove(id);
-                await Clients.AllExcept(Context.ConnectionId).SendAsync("ReceiveMessage", 0, username, $"{username} has left the chat");
+                await Clients.AllExcept(Context.ConnectionId).SendAsync("ReceiveMessage", 0, username, $"{username} has left the chat", DateTime.Now);
             }
             await base.OnDisconnectedAsync(e);
         }

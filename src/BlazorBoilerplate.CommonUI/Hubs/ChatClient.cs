@@ -6,13 +6,11 @@ using System.Threading.Tasks;
 
 namespace BlazorBoilerplate.CommonUI.Hubs
 {
-
     /// <summary>
     /// Generic client class that interfaces .NET Standard/Blazor with SignalR Javascript client
     /// </summary>
     public class ChatClient : IDisposable
     {
-
         #region static methods
 
         /// <summary>
@@ -20,9 +18,8 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// </summary>
         private static readonly Dictionary<string, ChatClient> _clients = new Dictionary<string, ChatClient>();
 
-
         /// <summary>
-        /// Inbound message handler 
+        /// Inbound message handler
         /// </summary>
         /// <param name="key"></param>
         /// <param name="method"></param>
@@ -32,7 +29,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// This method is called from Javascript when amessage is received
         /// </remarks>
         [JSInvokable]
-        public static void ReceiveMessage(string key, string method, int id, string username, string message)
+        public static void ReceiveMessage(string key, string method, int id, string username, string message, DateTime when)
         {
             if (_clients.ContainsKey(key))
             {
@@ -40,7 +37,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
                 switch (method)
                 {
                     case "ReceiveMessage":
-                        client.HandleReceiveMessage(id, username, message);
+                        client.HandleReceiveMessage(id, username, message, when);
                         return;
 
                     default:
@@ -54,7 +51,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
             }
         }
 
-        #endregion
+        #endregion static methods
 
         /// <summary>
         /// Ctor: create a new client for the given hub URL
@@ -72,7 +69,7 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// <summary>
         /// The Hub URL for chat client
         /// </summary>
-        const string HUBURL = "/chathub";
+        private const string HUBURL = "/chathub";
 
         /// <summary>
         /// Our unique key for this client instance
@@ -98,7 +95,6 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// JS runtime from DI
         /// </summary>
         private readonly IJSRuntime _JSruntime;
-
 
         /// <summary>
         /// Start the SignalR client on JS
@@ -126,10 +122,10 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// </summary>
         /// <param name="method">event name</param>
         /// <param name="message">message content</param>
-        private void HandleReceiveMessage(int id, string username, string message)
+        private void HandleReceiveMessage(int id, string username, string message, DateTime when)
         {
             // raise an event to subscribers
-            MessageReceived?.Invoke(this, new MessageReceivedEventArgs(id, username, message));
+            MessageReceived?.Invoke(this, new MessageReceivedEventArgs(id, username, message, when));
         }
 
         /// <summary>
@@ -212,11 +208,12 @@ namespace BlazorBoilerplate.CommonUI.Hubs
     /// </summary>
     public class MessageReceivedEventArgs : EventArgs
     {
-        public MessageReceivedEventArgs(int id, string username, string message)
+        public MessageReceivedEventArgs(int id, string username, string message, DateTime when)
         {
             Id = id;
             Username = username;
             Message = message;
+            When = when;
         }
 
         /// <summary>
@@ -233,5 +230,10 @@ namespace BlazorBoilerplate.CommonUI.Hubs
         /// Message id
         /// </summary>
         public int Id { get; internal set; }
+
+        /// <summary>
+        /// Message Time
+        /// </summary>
+        public DateTime When { get; set; }
     }
 }
