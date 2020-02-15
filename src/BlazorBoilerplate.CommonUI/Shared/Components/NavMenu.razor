@@ -26,10 +26,10 @@
             {
                 <EditForm Model="@loginParameters" OnValidSubmit="@SubmitLogin">
                     <div class="form-group">
-                        <input type="text" @bind="@loginParameters.UserName" Label="همراه" class="form-control">
+                        <input type="text" @bind="@loginParameters.UserName" placeholder="همراه" Label="همراه" class="form-control">
                     </div>
                     <div class="form-group">
-                        <input type="password" @bind="@loginParameters.Password" Label="گذرواژه" class="form-control">
+                        <input type="password" @bind="@loginParameters.Password" placeholder="رمز" Label="گذرواژه" class="form-control">
                     </div>
                     <div class="form-group form-check form-check-inline">
                         <input type="checkbox" class="form-check-input" @bind="@loginParameters.RememberMe" id="remember">
