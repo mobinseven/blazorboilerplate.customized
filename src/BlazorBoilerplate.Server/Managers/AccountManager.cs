@@ -14,6 +14,7 @@ using BlazorBoilerplate.Shared.DataModels;
 using BlazorBoilerplate.Shared.Dto.Account;
 using BlazorBoilerplate.Shared.Dto.Email;
 using IdentityModel;
+using BlazorBoilerplate.Shared.Dto;
 
 namespace BlazorBoilerplate.Server.Managers
 {
@@ -83,7 +84,8 @@ namespace BlazorBoilerplate.Server.Managers
                 return new ApiResponse(200, "Success");
             }
 
-            // TODO: Break out the email sending here, to a separate class/service etc.. 
+            // TODO: Break out the email sending here, to a separate class/service etc..
+
             #region Forgot Password Email
 
             try
@@ -157,7 +159,7 @@ namespace BlazorBoilerplate.Server.Managers
             {
                 var requireConfirmEmail = Convert.ToBoolean(_configuration["BlazorBoilerplate:RequireConfirmedEmail"] ?? "false");
 
-                await this.RegisterNewUserAsync(parameters.UserName, parameters.Email, parameters.Password, requireConfirmEmail);
+                await this.RegisterNewUserAsync(parameters);
 
                 if (requireConfirmEmail)
                 {
@@ -192,8 +194,8 @@ namespace BlazorBoilerplate.Server.Managers
                 _logger.LogInformation("User does not exist: {0}", parameters.UserId);
                 return new ApiResponse(404, "User does not exist");
             }
-            
-             // TODO: Break this out into it's own self-contained Email Helper service. 
+
+            // TODO: Break this out into it's own self-contained Email Helper service.
 
             try
             {
@@ -261,11 +263,10 @@ namespace BlazorBoilerplate.Server.Managers
         {
             try
             {
-
                 var user = new ApplicationUser
                 {
                     UserName = parameters.UserName,
-                    Email = parameters.Email
+                    PhoneNumber = parameters.PhoneNumber
                 };
 
                 user.UserName = parameters.UserName;
@@ -279,8 +280,7 @@ namespace BlazorBoilerplate.Server.Managers
                     var claimsResult = _userManager.AddClaimsAsync(user, new Claim[]{
                         new Claim(Policies.IsUser,""),
                         new Claim(JwtClaimTypes.Name, parameters.UserName),
-                        new Claim(JwtClaimTypes.Email, parameters.Email),
-                        new Claim(JwtClaimTypes.EmailVerified, "false", ClaimValueTypes.Boolean)
+                        new Claim(JwtClaimTypes.PhoneNumber, parameters.PhoneNumber)
                     }).Result;
                 }
 
@@ -309,7 +309,7 @@ namespace BlazorBoilerplate.Server.Managers
 
                     return new ApiResponse(200, "Create User Success");
                 }
-                
+
                 try
                 {
                     var email = new EmailMessageDto();
@@ -353,7 +353,6 @@ namespace BlazorBoilerplate.Server.Managers
             }
             try
             {
-               
                 //EF: not a fan this will delete old ApiLogs
                 await _userProfileStore.DeleteAllApiLogsForUser(user.Id);
 
@@ -422,7 +421,7 @@ namespace BlazorBoilerplate.Server.Managers
 
                     var rolesToRemove = currentUserRoles
                         .Where(role => !userInfo.Roles.Contains(role)).ToList();
-                    
+
                     await _userManager.RemoveFromRolesAsync(appUser, rolesToRemove).ConfigureAwait(true);
 
                     //HACK to switch to claims auth
@@ -486,17 +485,21 @@ namespace BlazorBoilerplate.Server.Managers
             }
         }
 
-        public async Task<ApplicationUser> RegisterNewUserAsync(string userName, string email, string password, bool requireConfirmEmail)
+        public async Task<ApplicationUser> RegisterNewUserAsync(RegisterDto registerDto)
         {
             var user = new ApplicationUser
             {
-                UserName = userName,
-                Email = email
+                UserName = registerDto.UserName,
+                PhoneNumber = registerDto.PhoneNumber,
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
+                FullName = registerDto.FirstName + " " + registerDto.LastName,
+                PhoneNumberConfirmed = true
             };
 
-            var createUserResult = password == null ?
+            var createUserResult = registerDto.Password == null ?
                 await _userManager.CreateAsync(user) :
-                await _userManager.CreateAsync(user, password);
+                await _userManager.CreateAsync(user, registerDto.Password);
 
             if (!createUserResult.Succeeded)
             {
@@ -506,39 +509,39 @@ namespace BlazorBoilerplate.Server.Managers
             await _userManager.AddClaimsAsync(user, new Claim[]{
                     new Claim(Policies.IsUser,""),
                     new Claim(JwtClaimTypes.Name, user.UserName),
-                    new Claim(JwtClaimTypes.Email, user.Email),
-                    new Claim(JwtClaimTypes.EmailVerified, "false", ClaimValueTypes.Boolean)
+                    new Claim(JwtClaimTypes.PhoneNumber, user.PhoneNumber),
+                    new Claim(JwtClaimTypes.PhoneNumberVerified, user.PhoneNumberConfirmed.ToString(), ClaimValueTypes.Boolean),
                 });
 
             //Role - Here we tie the new user to the "User" role
             await _userManager.AddToRoleAsync(user, "User");
 
             _logger.LogInformation("New user registered: {0}", user);
+            //TODO: Welcome SMS
+            //var emailMessage = new EmailMessageDto();
 
-            var emailMessage = new EmailMessageDto();
+            //if (requireConfirmEmail)
+            //{
+            //    // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=532713
+            //    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            //    string callbackUrl = string.Format("{0}/Account/ConfirmEmail/{1}?token={2}", _configuration["BlazorBoilerplate:ApplicationUrl"], user.Id, token);
 
-            if (requireConfirmEmail)
-            {
-                // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=532713
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                var callbackUrl = $"{_configuration["BlazorBoilerplate:ApplicationUrl"]}/Account/ConfirmEmail/{user.Id}?token={token}";
+            //    emailMessage.BuildNewUserConfirmationEmail(user.UserName, user.Email, callbackUrl, user.Id.ToString(), token); //Replace First UserName with Name if you want to add name to Registration Form
+            //}
+            //else
+            //{
+            //    emailMessage.BuildNewUserEmail(user.FullName, user.UserName, user.Email, password);
+            //}
 
-                emailMessage.BuildNewUserConfirmationEmail(user.UserName, user.Email, callbackUrl, user.Id.ToString(), token); //Replace First UserName with Name if you want to add name to Registration Form
-            }
-            else
-            {
-                emailMessage.BuildNewUserEmail(user.FullName, user.UserName, user.Email, password);
-            }
-
-            emailMessage.ToAddresses.Add(new EmailAddressDto(user.Email, user.Email));
-            try
-            {
-                await _emailManager.SendEmailAsync(emailMessage);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogInformation("New user email failed: Body: {0}, Error: {1}", emailMessage.Body, ex.Message);
-            }
+            //emailMessage.ToAddresses.Add(new EmailAddressDto(user.Email, user.Email));
+            //try
+            //{
+            //    await _emailService.SendEmailAsync(emailMessage);
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogInformation("New user email failed: Body: {0}, Error: {1}", emailMessage.Body, ex.Message);
+            //}
 
             return user;
         }
@@ -577,6 +580,22 @@ namespace BlazorBoilerplate.Server.Managers
             }
 
             return null;
+        }
+
+        public async Task<ApiResponse> PhoneAvailabilityCheck(string PhoneNumber)
+        {
+            BoolDto available = new BoolDto() { Boolean = false };
+            Task<ApplicationUser> t = _userManager.FindByNameAsync(PhoneNumber);
+            //Task<int> t = _db.Users.CountAsync(us => us.PhoneNumber == id);
+            await t;
+            ApplicationUser user = t.Result;
+            if (t.IsCompletedSuccessfully)
+            {
+                if (user == null)
+                    available.Boolean = true;
+                return new ApiResponse(200, "Retrieved Phone Availability", available); ;
+            }
+            return new ApiResponse(401, "Phone Availability Retrieved Error", available); ;
         }
     }
 }

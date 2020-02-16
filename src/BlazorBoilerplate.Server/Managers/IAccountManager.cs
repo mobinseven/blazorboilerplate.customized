@@ -27,8 +27,8 @@ namespace BlazorBoilerplate.Server.Managers
         Task<ApiResponse> UserInfo(ClaimsPrincipal userClaimsPrincipal);
 
         Task<ApiResponse> UpdateUser(UserInfoDto userInfo);
-        
-        // Admin policies. 
+
+        // Admin policies.
 
         Task<ApiResponse> Create(RegisterDto parameters);
 
@@ -41,7 +41,9 @@ namespace BlazorBoilerplate.Server.Managers
         Task<ApiResponse> Update(UserInfoDto userInfo);
 
         Task<ApiResponse> AdminResetUserPasswordAsync(Guid id, string newPassword, ClaimsPrincipal userClaimsPrincipal);
-        
-        Task<ApplicationUser> RegisterNewUserAsync(string userName, string email, string password, bool requireConfirmEmail);
+
+        Task<ApplicationUser> RegisterNewUserAsync(RegisterDto registerDto);
+
+        Task<ApiResponse> PhoneAvailabilityCheck(string PhoneNumber);
     }
 }
