@@ -1,6 +1,6 @@
-﻿using BlazorBoilerplate.Server.Models;
-using BlazorBoilerplate.Server.Services;
-using BlazorBoilerplate.Shared.Dto;
+﻿using BlazorBoilerplate.Shared.DataInterfaces;
+using BlazorBoilerplate.Shared.DataModels;
+using BlazorBoilerplate.Shared.Dto.Sample;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using System;
@@ -14,11 +14,11 @@ namespace BlazorBoilerplate.Server.Hubs
     /// </summary>
     public class ChatHub : Hub
     {
-        private IMessageService MessageService { get; set; }
+        private IMessageStore MessageService { get; set; }
 
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public ChatHub(IMessageService messageService, UserManager<ApplicationUser> userManager)
+        public ChatHub(IMessageStore messageService, UserManager<ApplicationUser> userManager)
         {
             MessageService = messageService;
             _userManager = userManager;
@@ -39,7 +39,7 @@ namespace BlazorBoilerplate.Server.Hubs
         /// <returns></returns>
         public async Task DeleteMessage(int id)
         {
-            await MessageService.Delete(id);
+            await MessageService.DeleteById(id);
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace BlazorBoilerplate.Server.Hubs
         /// <returns></returns>
         public async Task SendMessage(string message)
         {
-            var user = await _userManager.FindByNameAsync(Context.User.Identity.Name);
+            ApplicationUser user = await _userManager.FindByNameAsync(Context.User.Identity.Name);
 
             MessageDto newMessage = new MessageDto()
             {
@@ -59,7 +59,7 @@ namespace BlazorBoilerplate.Server.Hubs
                 When = DateTime.UtcNow
             };
 
-            await MessageService.Create(newMessage);
+            await MessageService.AddMessage(newMessage);
 
             #region Customized
 
@@ -75,7 +75,7 @@ namespace BlazorBoilerplate.Server.Hubs
         /// <returns></returns>
         public async Task Register(string username)
         {
-            var currentId = Context.ConnectionId;
+            string currentId = Context.ConnectionId;
 
             if (!userLookup.ContainsKey(currentId))
             {
@@ -93,9 +93,9 @@ namespace BlazorBoilerplate.Server.Hubs
         public override Task OnConnectedAsync()
         {
             Console.WriteLine("Connected");
-            List<MessageDto> messages = MessageService.GetList();
+            List<MessageDto> messages = MessageService.GetMessages();
 
-            foreach (var message in messages)
+            foreach (MessageDto message in messages)
             {
                 Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", message.Id, message.UserName, message.Text, message.When);
             }

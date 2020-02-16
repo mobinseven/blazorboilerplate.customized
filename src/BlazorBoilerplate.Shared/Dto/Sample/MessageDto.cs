@@ -29,12 +29,6 @@ namespace BlazorBoilerplate.Shared.Dto.Sample
         /// Determine CSS classes to use for message div
         /// TODO: disambiguate between your and other members
         /// </summary>
-        public bool Incoming
-        {
-            get
-            {
-                return !Mine;
-            }
-        }
+        public bool Incoming => !Mine;
     }
 }

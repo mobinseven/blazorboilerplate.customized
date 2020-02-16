@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 using AutoMapper;
+
 #if ServerSideBlazor
 
 using BlazorBoilerplate.CommonUI;
@@ -13,10 +14,7 @@ using BlazorBoilerplate.CommonUI.Services.Contracts;
 using BlazorBoilerplate.CommonUI.Services.Implementations;
 using BlazorBoilerplate.CommonUI.States;
 
-using MatBlazor;
-
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components;
 
 using System.Net.Http;
 
@@ -36,7 +34,7 @@ using IdentityServer4;
 using IdentityServer4.AccessTokenValidation;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -47,6 +45,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace BlazorBoilerplate.Server
 {
@@ -68,7 +67,7 @@ namespace BlazorBoilerplate.Server
         {
             services.Configure<ApiBehaviorOptions>(options => { options.SuppressModelStateInvalidFilter = true; });
 
-            var authAuthority = Configuration["BlazorBoilerplate:IS4ApplicationUrl"].TrimEnd('/');
+            string authAuthority = Configuration["BlazorBoilerplate:IS4ApplicationUrl"].TrimEnd('/');
 
             services.RegisterStorage(Configuration);
 
@@ -76,7 +75,7 @@ namespace BlazorBoilerplate.Server
                 AdditionalUserClaimsPrincipalFactory>();
 
             // Adds IdentityServer
-            var identityServerBuilder = services.AddIdentityServer(options =>
+            IIdentityServerBuilder identityServerBuilder = services.AddIdentityServer(options =>
             {
                 options.IssuerUri = authAuthority;
                 options.Events.RaiseErrorEvents = true;
@@ -102,15 +101,15 @@ namespace BlazorBoilerplate.Server
             {
                 // Works for IIS, finds cert by the thumbprint in appsettings.json
                 // Make sure Certificate is in the Web Hosting folder && installed to LocalMachine or update settings below
-                var useLocalCertStore = Convert.ToBoolean(Configuration["BlazorBoilerplate:UseLocalCertStore"]);
-                var certificateThumbprint = Configuration["BlazorBoilerplate:CertificateThumbprint"];
+                bool useLocalCertStore = Convert.ToBoolean(Configuration["BlazorBoilerplate:UseLocalCertStore"]);
+                string certificateThumbprint = Configuration["BlazorBoilerplate:CertificateThumbprint"];
 
                 if (useLocalCertStore)
                 {
                     using (X509Store store = new X509Store("WebHosting", StoreLocation.LocalMachine))
                     {
                         store.Open(OpenFlags.ReadOnly);
-                        var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
+                        X509Certificate2Collection certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
                         if (certs.Count > 0)
                         {
                             cert = certs[0];
@@ -146,7 +145,7 @@ namespace BlazorBoilerplate.Server
                 identityServerBuilder.AddSigningCredential(cert);
             }
 
-            var authBuilder = services.AddAuthentication(options =>
+            Microsoft.AspNetCore.Authentication.AuthenticationBuilder authBuilder = services.AddAuthentication(options =>
             {
                 options.DefaultScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
             })
@@ -229,7 +228,7 @@ namespace BlazorBoilerplate.Server
                     {
                         if (context.Request.Path.StartsWithSegments("/api"))
                         {
-                            context.Response.StatusCode = (int) (HttpStatusCode.Unauthorized);
+                            context.Response.StatusCode = (int)(HttpStatusCode.Unauthorized);
                         }
 
                         return Task.CompletedTask;
@@ -249,8 +248,8 @@ namespace BlazorBoilerplate.Server
             {
                 config.PostProcess = document =>
                 {
-                    document.Info.Version     = "0.6.1";
-                    document.Info.Title       = "Blazor Boilerplate";
+                    document.Info.Version = "0.6.1";
+                    document.Info.Title = "Blazor Boilerplate";
 #if ServerSideBlazor
                     document.Info.Description = "Blazor Boilerplate / Starter Template using the  Server Side Version";
 #endif
@@ -270,23 +269,23 @@ namespace BlazorBoilerplate.Server
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IEmailConfiguration>(Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>());
-            
+
             services.AddTransient<IAccountManager, AccountManager>();
             services.AddTransient<IAdminManager, AdminManager>();
             services.AddTransient<IApiLogManager, ApiLogManager>();
             services.AddTransient<IEmailManager, EmailManager>();
-            services.AddTransient<IExternalAuthManager, ExternalAuthManager>(); // Currently not being used. 
+            services.AddTransient<IExternalAuthManager, ExternalAuthManager>(); // Currently not being used.
             services.AddTransient<IMessageManager, MessageManager>();
             services.AddTransient<ITodoManager, ToDoManager>();
             services.AddTransient<IUserProfileManager, UserProfileManager>();
 
             //Automapper to map DTO to Models https://www.c-sharpcorner.com/UploadFile/1492b1/crud-operations-using-automapper-in-mvc-application/
-            var automapperConfig = new MapperConfiguration(configuration =>
+            MapperConfiguration automapperConfig = new MapperConfiguration(configuration =>
             {
                 configuration.AddProfile(new MappingProfile());
             });
 
-            var autoMapper = automapperConfig.CreateMapper();
+            IMapper autoMapper = automapperConfig.CreateMapper();
 
             services.AddSingleton(autoMapper);
 
@@ -295,15 +294,6 @@ namespace BlazorBoilerplate.Server
             services.AddScoped<IAuthorizeApi, AuthorizeApi>();
             services.AddScoped<IUserProfileApi, UserProfileApi>();
             services.AddScoped<AppState>();
-            services.AddMatToaster(config =>
-            {
-                config.Position = MatToastPosition.BottomRight;
-                config.PreventDuplicates = true;
-                config.NewestOnTop = true;
-                config.ShowCloseButton = true;
-                config.MaximumOpacity = 95;
-                config.VisibleStateDuration = 3000;
-            });
 
             // Setup HttpClient for server side
             services.AddScoped<HttpClient>();
@@ -314,7 +304,7 @@ namespace BlazorBoilerplate.Server
             // Authentication providers
 
             Log.Logger.Debug("Removing AuthenticationStateProvider...");
-            var serviceDescriptor = services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(AuthenticationStateProvider));
+            ServiceDescriptor serviceDescriptor = services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(AuthenticationStateProvider));
             if (serviceDescriptor != null)
             {
                 services.Remove(serviceDescriptor);
@@ -326,7 +316,7 @@ namespace BlazorBoilerplate.Server
 #endif
 
             Log.Logger.Debug($"Total Services Registered: {services.Count}");
-            foreach (var service in services)
+            foreach (ServiceDescriptor service in services)
             {
                 Log.Logger.Debug($"\n      Service: {service.ServiceType.FullName}\n      Lifetime: {service.Lifetime}\n      Instance: {service.ImplementationType?.FullName}");
             }
@@ -337,9 +327,9 @@ namespace BlazorBoilerplate.Server
         {
             EmailTemplates.Initialize(env);
 
-            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            using (IServiceScope serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                var databaseInitializer = serviceScope.ServiceProvider.GetService<IDatabaseInitializer>();
+                IDatabaseInitializer databaseInitializer = serviceScope.ServiceProvider.GetService<IDatabaseInitializer>();
                 databaseInitializer.SeedAsync().Wait();
             }
 
@@ -358,8 +348,8 @@ namespace BlazorBoilerplate.Server
             }
             else
             {
-              // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-              //    app.UseHsts(); //HSTS Middleware (UseHsts) to send HTTP Strict Transport Security Protocol (HSTS) headers to clients.
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                //    app.UseHsts(); //HSTS Middleware (UseHsts) to send HTTP Strict Transport Security Protocol (HSTS) headers to clients.
             }
 
             app.UseHttpsRedirection();
@@ -395,7 +385,6 @@ namespace BlazorBoilerplate.Server
                 endpoints.MapFallbackToPage("/index_ssb");
 #endif
             });
-
         }
     }
 }

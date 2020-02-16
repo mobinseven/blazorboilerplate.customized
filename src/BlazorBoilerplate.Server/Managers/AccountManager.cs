@@ -595,7 +595,7 @@ namespace BlazorBoilerplate.Server.Managers
                     available.Boolean = true;
                 return new ApiResponse(200, "Retrieved Phone Availability", available); ;
             }
-            return new ApiResponse(401, "Phone Availability Retrieved Error", available); ;
+            return new ApiResponse(500, "Phone availability retrieving not successfull"); ;
         }
     }
 }

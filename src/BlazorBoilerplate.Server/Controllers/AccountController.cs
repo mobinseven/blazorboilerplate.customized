@@ -114,7 +114,6 @@ namespace BlazorBoilerplate.Server.Controllers
         // Get: api/Account/PhoneAvailabilityCheck/{PhoneNumber}
         [HttpGet("PhoneAvailabilityCheck/{PhoneNumber}")]
         [ProducesResponseType(200)]
-        [ProducesResponseType(401)]
         public async Task<ApiResponse> PhoneAvailabilityCheck(string PhoneNumber)
             => await _accountManager.PhoneAvailabilityCheck(PhoneNumber);
     }

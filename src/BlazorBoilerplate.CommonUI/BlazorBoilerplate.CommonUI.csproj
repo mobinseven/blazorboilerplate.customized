@@ -49,6 +49,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlazorBoilerplate.Shared\BlazorBoilerplate.Shared.csproj" />
+    <ProjectReference Include="..\BlazorBoilerplate.Storage\BlazorBoilerplate.Storage.csproj" />
   </ItemGroup>
 
 </Project>

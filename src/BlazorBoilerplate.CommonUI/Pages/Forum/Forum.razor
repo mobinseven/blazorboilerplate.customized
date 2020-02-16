@@ -34,7 +34,7 @@
         }
         @foreach (var message in Messages)
         {
-            <ForumMessage Delete="Delete" Message="@message" />
+            <ForumMessage Message="@message" />
         }
     }
     <div class="MessageCreateForm"> <ForumMessageCreateForm Send="Send" /></div>

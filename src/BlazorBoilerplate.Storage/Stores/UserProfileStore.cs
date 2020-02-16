@@ -20,14 +20,9 @@ namespace BlazorBoilerplate.Storage.Stores
         {
             var lastPageVisited = "/dashboard";
             var userProfile = from userProf in _applicationDbContext.UserProfiles
-                join user in _applicationDbContext.Users on userProf.UserId equals user.Id
-                where user.UserName == userName
-                select userProf;
-
-            if (userProfile.Any())
-            {
-                lastPageVisited = !string.IsNullOrEmpty(userProfile.First().LastPageVisited) ? userProfile.First().LastPageVisited : lastPageVisited;
-            }
+                              join user in _applicationDbContext.Users on userProf.UserId equals user.Id
+                              where user.UserName == userName
+                              select userProf;
 
             return lastPageVisited;
         }
@@ -35,8 +30,8 @@ namespace BlazorBoilerplate.Storage.Stores
         public UserProfileDto Get(Guid userId)
         {
             var profileQuery = from userProf in _applicationDbContext.UserProfiles
-                where userProf.UserId == userId
-                select userProf;
+                               where userProf.UserId == userId
+                               select userProf;
 
             var userProfile = new UserProfileDto();
             if (!profileQuery.Any())
@@ -49,10 +44,6 @@ namespace BlazorBoilerplate.Storage.Stores
             else
             {
                 var profile = profileQuery.First();
-                userProfile.Count = profile.Count;
-                userProfile.IsNavOpen = profile.IsNavOpen;
-                userProfile.LastPageVisited = profile.LastPageVisited;
-                userProfile.IsNavMinified = profile.IsNavMinified;
                 userProfile.UserId = userId;
             }
 
@@ -65,11 +56,7 @@ namespace BlazorBoilerplate.Storage.Stores
             if (profileQuery.Any())
             {
                 var profile = profileQuery.First();
-                
-                profile.Count = userProfileDto.Count;
-                profile.IsNavOpen = userProfileDto.IsNavOpen;
-                profile.LastPageVisited = userProfileDto.LastPageVisited;
-                profile.IsNavMinified = userProfileDto.IsNavMinified;
+
                 profile.LastUpdatedDate = DateTime.Now;
                 _applicationDbContext.UserProfiles.Update(profile);
             }
@@ -78,10 +65,6 @@ namespace BlazorBoilerplate.Storage.Stores
                 var profile = new UserProfile
                 {
                     UserId = userProfileDto.UserId,
-                    Count = userProfileDto.Count,
-                    IsNavOpen = userProfileDto.IsNavOpen,
-                    LastPageVisited = userProfileDto.LastPageVisited,
-                    IsNavMinified = userProfileDto.IsNavMinified,
                     LastUpdatedDate = DateTime.Now
                 };
                 _applicationDbContext.UserProfiles.Add(profile);
@@ -92,7 +75,7 @@ namespace BlazorBoilerplate.Storage.Stores
 
         public async Task DeleteAllApiLogsForUser(Guid userId)
         {
-            var apiLogs = _applicationDbContext.ApiLogs.Where(a => a.ApplicationUserId == userId); // This could be handled in a store, getting rid of the ugliness here. 
+            var apiLogs = _applicationDbContext.ApiLogs.Where(a => a.ApplicationUserId == userId); // This could be handled in a store, getting rid of the ugliness here.
             foreach (var apiLog in apiLogs)
             {
                 _applicationDbContext.ApiLogs.Remove(apiLog);

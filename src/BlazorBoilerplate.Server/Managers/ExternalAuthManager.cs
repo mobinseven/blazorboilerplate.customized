@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BlazorBoilerplate.Server.Managers
 {
-    // TODO: The methods are very tightly coupled with the controllers. Will re-visit. 
+    // TODO: The methods are very tightly coupled with the controllers. Will re-visit.
     public class ExternalAuthManager : IExternalAuthManager
     {
         private readonly IAccountManager _accountManager;
@@ -27,9 +27,9 @@ namespace BlazorBoilerplate.Server.Managers
         private readonly ILogger<AccountController> _logger;
         private readonly IConfiguration _configuration;
 
-        public ExternalAuthManager(IAccountManager accountManager, 
-            UserManager<ApplicationUser> userManager, 
-            SignInManager<ApplicationUser> signInManager, 
+        public ExternalAuthManager(IAccountManager accountManager,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
             ILogger<AccountController> logger,
             IConfiguration configuration)
         {
@@ -39,14 +39,14 @@ namespace BlazorBoilerplate.Server.Managers
             _logger = logger;
             _configuration = configuration;
         }
-        
+
         public async Task<(AuthenticationProperties authProps, string schemaName)> Challenge(string uri, string provider)
         {
             var schemes = await _signInManager.GetExternalAuthenticationSchemesAsync();
             var schema = schemes.SingleOrDefault(s => string.Compare(s.Name, provider, StringComparison.OrdinalIgnoreCase) == 0);
 
             if (schema == null)
-            
+
                 throw new ArgumentNullException($"~/externalauth/error/{ErrorEnum.ProviderNotFound}");
 
             var props = new AuthenticationProperties
@@ -137,14 +137,14 @@ namespace BlazorBoilerplate.Server.Managers
 
                         return $"~/externalauth/error/{ErrorEnum.Unknown}";
                     }
-
                 }
                 else // create new user first
                 {
                     var requireConfirmEmail = Convert.ToBoolean(_configuration["BlazorBoilerplate:RequireConfirmedEmail"] ?? "false");
                     try
                     {
-                        user = await _accountManager.RegisterNewUserAsync(userNameClaim.Value, userEmailClaim.Value, null, requireConfirmEmail);
+                        throw new NotImplementedException();// TODO ExternalSignIn?
+                        //user = await _accountManager.RegisterNewUserAsync(userNameClaim.Value, userEmailClaim.Value, null, requireConfirmEmail);
                     }
                     catch (DomainException ex)
                     {
@@ -165,7 +165,6 @@ namespace BlazorBoilerplate.Server.Managers
                     }
                 }
 
-                
                 //All if fine, this user (email) did not try to log in before using this external provider
                 //Add external login info
                 var addExternalLoginResult = await _userManager.AddLoginAsync(user, new UserLoginInfo(externalProvider, externalUserId, userNameClaim.Value));
@@ -202,7 +201,6 @@ namespace BlazorBoilerplate.Server.Managers
 
                     return $"~/externalauth/error/{ErrorEnum.Unknown}";
                 }
-
             }
             catch (Exception ex)
             {
