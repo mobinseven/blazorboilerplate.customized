@@ -38,14 +38,14 @@ namespace BlazorBoilerplate.Server.Services
             _userManager = userManager;
         }
 
-        public async Task<ApiResponse> GetTenants() => new ApiResponse(200, "Retrieved Api Log", _autoMapper.ProjectTo<TenantDto>(_db.Tenants));
+        public async Task<ApiResponse> GetTenants() => new ApiResponse(200, "Retrieved Tenants", _autoMapper.ProjectTo<TenantDto>(_db.Tenants));
 
         public async Task<ApiResponse> GetTenant(int id)
         {
             TenantDto tenantDto = new TenantDto();
             _autoMapper.Map(await _db.Tenants.FindAsync(id), tenantDto);
             tenantDto.OwnerName = (await _userManager.FindByIdAsync(tenantDto.OwnerUserId.ToString())).FullName;
-            return new ApiResponse(200, "Retrieved Api Log", tenantDto);
+            return new ApiResponse(200, "Retrieved Tenant", tenantDto);
         }
 
         public async Task<ApiResponse> PutTenant(int id, TenantDto tenant)

@@ -25,7 +25,7 @@ namespace BlazorBoilerplate.Server.Controllers
         public TenantsController(ITenantService tenantService)
         {
             _tenantService = tenantService;
-            _invalidModel = new ApiResponse(400, "User Model is Invalid");
+            _invalidModel = new ApiResponse(400, "Tenant Model is Invalid");
         }
 
         // GET: api/Tenants
