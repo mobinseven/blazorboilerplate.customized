@@ -38,9 +38,9 @@ namespace BlazorBoilerplate.Server.Middleware
                     userSession.UserId = new Guid(httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Subject).First().Value);
                     userSession.UserName = httpContext.User.Identity.Name;
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
-
-                    if (Int32.TryParse(httpContext.User.Claims.First(c => c.Type == "tenantid").Value, out int TenantId))
-                        userSession.TenantId = TenantId;
+                    Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "tenantid");
+                    if (tenantClaim != null)
+                        userSession.TenantId = Convert.ToInt32(tenantClaim.Value);
 
                     if (userSession.Roles.Contains("Administrator"))
                         userSession.DisableTenantFilter = true;
