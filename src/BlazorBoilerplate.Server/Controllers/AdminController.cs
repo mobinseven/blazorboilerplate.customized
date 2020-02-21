@@ -23,9 +23,9 @@ namespace BlazorBoilerplate.Server.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AdminController : ControllerBase
     {
-
         #region Variables
 
         private static readonly UserInfoDto LoggedOutUser = new UserInfoDto { IsAuthenticated = false, Roles = new List<string>() };
@@ -38,7 +38,7 @@ namespace BlazorBoilerplate.Server.Controllers
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _db;
 
-        #endregion
+        #endregion Variables
 
         #region Constructors
 
@@ -55,7 +55,7 @@ namespace BlazorBoilerplate.Server.Controllers
             _db = db;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region GetUsers
 
@@ -101,7 +101,7 @@ namespace BlazorBoilerplate.Server.Controllers
             return new ApiResponse(200, "User list fetched", userDtoList);
         }
 
-        #endregion
+        #endregion GetUsers
 
         #region GetPermissions
 
@@ -113,7 +113,7 @@ namespace BlazorBoilerplate.Server.Controllers
             return new ApiResponse(200, "Permissions list fetched", permissions);
         }
 
-        #endregion
+        #endregion GetPermissions
 
         #region GetRoles
 
@@ -157,7 +157,7 @@ namespace BlazorBoilerplate.Server.Controllers
             return new ApiResponse(200, "Roles list fetched", roleDtoList);
         }
 
-        #endregion
+        #endregion GetRoles
 
         #region CRUD : GetRoleAsync
 
@@ -188,7 +188,6 @@ namespace BlazorBoilerplate.Server.Controllers
                     Name = roleName,
                     Permissions = permissions
                 };
-
             }
             catch (Exception ex)
             {
@@ -198,7 +197,7 @@ namespace BlazorBoilerplate.Server.Controllers
             return new ApiResponse(200, "Role fetched", roleDto);
         }
 
-        #endregion
+        #endregion CRUD : GetRoleAsync
 
         #region CRUD : CreateRoleAsync
 
@@ -231,7 +230,6 @@ namespace BlazorBoilerplate.Server.Controllers
                     if (!resultAddClaim.Succeeded)
                         await _roleManager.DeleteAsync(role);
                 }
-
             }
             catch (Exception ex)
             {
@@ -241,7 +239,7 @@ namespace BlazorBoilerplate.Server.Controllers
             return new ApiResponse(200);
         }
 
-        #endregion
+        #endregion CRUD : CreateRoleAsync
 
         #region CRUD : UpdateRoleAsync
 
@@ -281,7 +279,7 @@ namespace BlazorBoilerplate.Server.Controllers
             return new ApiResponse(200);
         }
 
-        #endregion
+        #endregion CRUD : UpdateRoleAsync
 
         #region CRUD : DeleteRoleAsync
 
@@ -308,6 +306,7 @@ namespace BlazorBoilerplate.Server.Controllers
                 return new ApiResponse(400, "Role Deletion Failed");
             }
         }
-        #endregion
+
+        #endregion CRUD : DeleteRoleAsync
     }
 }

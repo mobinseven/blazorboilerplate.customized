@@ -6,9 +6,8 @@ namespace BlazorBoilerplate.Shared.Dto.Tenant
 {
     public class TenantDto
     {
+        public Guid Id { get; set; }
         public string Title { get; set; }
-        public Guid OwnerUserId { get; set; }
-        public string OwnerName { get; set; }
-        public List<Guid> Users { get; set; }
+        public Guid ManagerUserId { get; set; }
     }
 }

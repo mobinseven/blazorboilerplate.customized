@@ -1,6 +1,7 @@
 ﻿using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Middleware.Extensions;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
+using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using IdentityModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -38,9 +39,9 @@ namespace BlazorBoilerplate.Server.Middleware
                     userSession.UserId = new Guid(httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Subject).First().Value);
                     userSession.UserName = httpContext.User.Identity.Name;
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
-                    Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "tenantid");
+                    Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == Claims.TenantId);
                     if (tenantClaim != null)
-                        userSession.TenantId = Convert.ToInt32(tenantClaim.Value);
+                        userSession.TenantId = Guid.Parse(tenantClaim.Value);
 
                     if (userSession.Roles.Contains("Administrator"))
                         userSession.DisableTenantFilter = true;

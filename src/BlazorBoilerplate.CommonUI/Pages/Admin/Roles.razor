@@ -37,7 +37,7 @@ else
                     @foreach (var permission in @RoleRow.Permissions)
                         {
                         <MatChip Label="@permission"></MatChip>
-                        }                            
+                        }
                 </MatChipSet>
             </td>
         </MatTableRow>
@@ -55,7 +55,7 @@ else
             </div>
         </fieldset>
 
-        <MatTable Items="@permissionsSelections" Class="mat-elevation-z5" ShowPaging="false">
+        <MatTable Items="@permissionsSelections" Class="mat-elevation-z5" ShowPaging="true">
             <MatTableHeader>
                 <th>Permissions</th>
                 <th>Allow</th>
@@ -65,7 +65,6 @@ else
                 <td><MatCheckbox TValue="bool" @bind-Value="@context.IsSelected"></MatCheckbox></td>
             </MatTableRow>
         </MatTable>
-
     </MatDialogContent>
     <MatDialogActions>
         <MatButton OnClick="@(e => { isUpsertRoleDialogOpen = false; })">Cancel</MatButton>

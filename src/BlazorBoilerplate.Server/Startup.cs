@@ -38,7 +38,9 @@ using IdentityServer4;
 using IdentityServer4.AccessTokenValidation;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
+
 using Microsoft.AspNetCore.Authorization;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -217,6 +219,7 @@ namespace BlazorBoilerplate.Server
             services.AddAuthorization(options =>
             {
                 options.AddPolicy(Policies.IsAdmin, Policies.IsAdminPolicy());
+                options.AddPolicy(Policies.IsTenantManager, Policies.IsTenantManagerPolicy());
                 options.AddPolicy(Policies.IsUser, Policies.IsUserPolicy());
                 options.AddPolicy(Policies.IsReadOnly, Policies.IsReadOnlyPolicy());
                 options.AddPolicy(Policies.IsMyDomain, Policies.IsMyDomainPolicy());  // valid only on serverside operations
@@ -271,7 +274,7 @@ namespace BlazorBoilerplate.Server
                     {
                         if (context.Request.Path.StartsWithSegments("/api"))
                         {
-                            context.Response.StatusCode = (int) (HttpStatusCode.Unauthorized);
+                            context.Response.StatusCode = (int)(HttpStatusCode.Unauthorized);
                         }
 
                         return Task.CompletedTask;
@@ -291,8 +294,8 @@ namespace BlazorBoilerplate.Server
             {
                 config.PostProcess = document =>
                 {
-                    document.Info.Version     = "0.7.0";
-                    document.Info.Title       = "Blazor Boilerplate";
+                    document.Info.Version = "0.7.0";
+                    document.Info.Title = "Blazor Boilerplate";
 #if ServerSideBlazor
                     document.Info.Description = "Blazor Boilerplate / Starter Template using the  Server Side Version";
 #endif
@@ -401,8 +404,8 @@ namespace BlazorBoilerplate.Server
             }
             else
             {
-              // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-              //    app.UseHsts(); //HSTS Middleware (UseHsts) to send HTTP Strict Transport Security Protocol (HSTS) headers to clients.
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                //    app.UseHsts(); //HSTS Middleware (UseHsts) to send HTTP Strict Transport Security Protocol (HSTS) headers to clients.
             }
 
             app.UseHttpsRedirection();
@@ -438,7 +441,6 @@ namespace BlazorBoilerplate.Server
                 endpoints.MapFallbackToPage("/index_ssb");
 #endif
             });
-
         }
     }
 }

@@ -43,12 +43,6 @@ namespace BlazorBoilerplate.Server.Data
                 .WithOne(b => b.ApplicationUser)
                 .HasForeignKey<UserProfile>(b => b.UserId);
 
-            modelBuilder.Entity<Tenant>()
-                .HasOne(t => t.Owner)
-                .WithOne(a => a.Tenant)
-                .HasForeignKey<Tenant>(t => t.OwnerUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.ShadowProperties();
 
             base.OnModelCreating(modelBuilder);
@@ -108,14 +102,14 @@ namespace BlazorBoilerplate.Server.Data
 
         public void SetGlobalQueryForTenant<T>(ModelBuilder builder) where T : class, ISoftDelete
         {
-            builder.Entity<T>().HasQueryFilter(item => (_userSession.DisableTenantFilter || EF.Property<int>(item, "TenantId") == _userSession.TenantId));
+            builder.Entity<T>().HasQueryFilter(item => (_userSession.DisableTenantFilter || EF.Property<Guid>(item, "TenantId") == _userSession.TenantId));
         }
 
         public void SetGlobalQueryForSoftDeleteAndTenant<T>(ModelBuilder builder) where T : class, ISoftDelete, ITenant
         {
             builder.Entity<T>().HasQueryFilter(
                 item => !EF.Property<bool>(item, "IsDeleted") &&
-                        (_userSession.DisableTenantFilter || EF.Property<int>(item, "TenantId") == _userSession.TenantId));
+                        (_userSession.DisableTenantFilter || EF.Property<Guid>(item, "TenantId") == _userSession.TenantId));
         }
 
         public override int SaveChanges()
