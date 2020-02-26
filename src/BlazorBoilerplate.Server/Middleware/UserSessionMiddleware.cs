@@ -42,7 +42,7 @@ namespace BlazorBoilerplate.Server.Middleware
 
                     Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == Claims.TenantId);
                     if (tenantClaim != null)
-                        userSession.TenantId = Te(tenantClaim.Value);
+                        userSession.TenantId = TenantClaims.ExtractTenantId(tenantClaim.Value);
 
                     if (userSession.Roles.Contains("Administrator"))
                         userSession.DisableTenantFilter = true;
