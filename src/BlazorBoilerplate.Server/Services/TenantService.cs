@@ -54,18 +54,6 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> GetTenant(Guid id) => new ApiResponse(200, "Retrieved Tenant", await _db.Tenants.FindAsync(id));
 
-        public async Task<ApiResponse> GetUserTenant(ClaimsPrincipal User)
-        {
-            Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantClaims.Tenant);
-            Tenant tenant = null;
-            if (claim != null)
-            {
-                Guid TenantId = TenantClaims.ExtractTenantId(claim.Value);
-                tenant = await _db.Tenants.FindAsync(TenantId);
-            }
-            return new ApiResponse(200, "Get User Tenant Successful", tenant);
-        }
-
         public async Task<ApiResponse> PutTenant(TenantDto tenant)
         {
             Tenant t = _db.Tenants.Find(tenant.Id);
