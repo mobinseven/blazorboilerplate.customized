@@ -4,7 +4,6 @@ using BlazorBoilerplate.Server.Middleware.Wrappers;
 using BlazorBoilerplate.Server.Models;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using BlazorBoilerplate.Shared.Dto;
-using BlazorBoilerplate.Shared.Dto.Tenant;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -21,61 +20,64 @@ namespace BlazorBoilerplate.Server.Services
 
         Task<ApiResponse> GetTenant(Guid id);
 
-        Task<ApiResponse> PutTenant(Guid id, TenantDto tenant);
-
         Task<ApiResponse> PostTenant(TenantDto tenant);
+
+        Task<ApiResponse> PutTenant(TenantDto tenant);
 
         Task<ApiResponse> DeleteTenant(Guid id);
 
-        Task<ApiResponse> GetTenantUsers(ClaimsPrincipal User);
+        Task<ApiResponse> GetTenantUsers(Guid TenantId);
 
-        Task<ApiResponse> AddTenantManager(UserInfoDto userInfoDto, TenantDto tenant);
+        Task<ApiResponse> AddTenantManager(string UserName, Guid TenantId);
 
-        Task<ApiResponse> RemoveTenantManager(UserInfoDto userInfoDto, TenantDto tenant);
+        Task<ApiResponse> AddTenantUser(string UserName, Guid TenantId);
 
-        Task<ApiResponse> AddTenantUser(UserInfoDto userInfoDto, TenantDto tenant);
-
-        Task<ApiResponse> RemoveTenantUser(UserInfoDto userInfoDto, TenantDto tenant);
+        Task<ApiResponse> RemoveTenantUser(Guid UserId, Guid TenantId);
     }
 
     public class TenantService : ITenantService
     {
         private readonly ApplicationDbContext _db;
-        private readonly IMapper _autoMapper;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IMapper _autoMapper;
 
-        public TenantService(ApplicationDbContext db, IMapper autoMapper, UserManager<ApplicationUser> userManager)
+        public TenantService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IMapper autoMapper)
         {
             _db = db;
-            _autoMapper = autoMapper;
             _userManager = userManager;
+            _autoMapper = autoMapper;
         }
 
         #region Tenants
 
-        public async Task<ApiResponse> GetTenants()
+        public async Task<ApiResponse> GetTenants() => new ApiResponse(200, "Retrieved Tenants", await _db.Tenants.ToListAsync());
+
+        public async Task<ApiResponse> GetTenant(Guid id) => new ApiResponse(200, "Retrieved Tenant", await _db.Tenants.FindAsync(id));
+
+        public async Task<ApiResponse> GetUserTenant(ClaimsPrincipal User)
         {
-            return new ApiResponse(200, "Retrieved Tenants", _autoMapper.Map<List<TenantDto>>(await _db.Tenants.ToListAsync()));
+            Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantClaims.Tenant);
+            Tenant tenant = null;
+            if (claim != null)
+            {
+                Guid TenantId = TenantClaims.ExtractTenantId(claim.Value);
+                tenant = await _db.Tenants.FindAsync(TenantId);
+            }
+            return new ApiResponse(200, "Get User Tenant Successful", tenant);
         }
 
-        public async Task<ApiResponse> GetTenant(Guid id)
+        public async Task<ApiResponse> PutTenant(TenantDto tenant)
         {
-            return new ApiResponse(200, "Retrieved Tenant", _autoMapper.Map<TenantDto>(await _db.Tenants.FindAsync(id)));
-        }
-
-        public async Task<ApiResponse> PutTenant(Guid id, TenantDto tenant)
-        {
-            _db.Tenants.Find(id);
-            Tenant t = _db.Tenants.Find(id);
-            _autoMapper.Map(tenant, t);
+            Tenant t = _db.Tenants.Find(tenant.Id);
+            t.Title = tenant.Title;
             try
             {
                 await _db.SaveChangesAsync();
-                return new ApiResponse(200, "Tenant Updated", _autoMapper.Map(t, new TenantDto()));
+                return new ApiResponse(200, "Tenant Updated. ", t);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!TenantExists(id))
+                if (!TenantExists(tenant.Id))
                 {
                     return new ApiResponse(404, "Tenant Not found");
                 }
@@ -88,11 +90,14 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> PostTenant(TenantDto tenant)
         {
-            Tenant t = new Tenant();
-            await _db.Tenants.AddAsync(_autoMapper.Map(tenant, t));
+            Tenant t = new Tenant
+            {
+                Title = tenant.Title
+            };
+            await _db.Tenants.AddAsync(t);
             await _db.SaveChangesAsync();
 
-            return new ApiResponse(200, "Tenant Created", _autoMapper.Map(t, new TenantDto()));
+            return new ApiResponse(200, "Tenant Created.", t);
         }
 
         public async Task<ApiResponse> DeleteTenant(Guid id)
@@ -105,7 +110,6 @@ namespace BlazorBoilerplate.Server.Services
 
             _db.Tenants.Remove(tenant);
             await _db.SaveChangesAsync();
-
             return new ApiResponse(200, "Tenant Removed", _autoMapper.Map(tenant, new TenantDto()));
         }
 
@@ -116,103 +120,98 @@ namespace BlazorBoilerplate.Server.Services
 
         #endregion Tenants
 
-        #region TenantUsers
+        #region TenantManagement
 
-        public async Task<ApiResponse> AddTenantManager(UserInfoDto userInfoDto, TenantDto tenant)
+        public async Task<ApiResponse> GetTenantUsers(Guid TenantId)
         {
-            ApplicationUser appUser = await _userManager.FindByIdAsync(userInfoDto.UserId.ToString());
-            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            if (userClaims.Contains(new Claim(Claims.TenantId, tenant.Id.ToString())))
+            Claim userClaim = TenantClaims.GenerateTenantClaim(TenantId, TenantRole.User);
+            List<UserInfoDto> userDtoList = new List<UserInfoDto>();
+            IList<ApplicationUser> listResponse;
+            try
             {
-                await _userManager.AddClaimAsync(appUser, new Claim(Policies.IsTenantManager, "true"));
-                return new ApiResponse(200, "User added as tenant manager", userInfoDto);
+                listResponse = await _userManager.GetUsersForClaimAsync(userClaim);
             }
-            return new ApiResponse(200, "User is not in tenant", userInfoDto);
-        }
-
-        public async Task<ApiResponse> RemoveTenantManager(UserInfoDto userInfoDto, TenantDto tenant)
-        {
-            ApplicationUser appUser = await _userManager.FindByIdAsync(userInfoDto.UserId.ToString());
-            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            if (userClaims.Contains(new Claim(Claims.TenantId, tenant.Id.ToString())))
+            catch (Exception ex)
             {
-                await _userManager.RemoveClaimAsync(appUser, new Claim(Policies.IsTenantManager, "true"));
-                return new ApiResponse(200, "User added as tenant manager", userInfoDto);
+                throw new Exception(null, ex);
             }
-            return new ApiResponse(200, "User is not in tenant", userInfoDto);
-        }
 
-        public async Task<ApiResponse> AddTenantUser(UserInfoDto userInfoDto, TenantDto tenant)
-        {
-            ApplicationUser appUser = await _userManager.FindByIdAsync(userInfoDto.UserId.ToString());
-            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            if (!userClaims.Contains(new Claim(Claims.TenantId, tenant.Id.ToString())))
+            // create the dto object with mapped properties and fetch roles associated with each user
+            try
             {
-                await _userManager.AddClaimAsync(appUser, new Claim(Claims.TenantId, tenant.Id.ToString()));
-                return new ApiResponse(200, "User added as tenant user", userInfoDto);
-            }
-            return new ApiResponse(200, "User is already in tenant", userInfoDto);
-        }
-
-        public async Task<ApiResponse> RemoveTenantUser(UserInfoDto userInfoDto, TenantDto tenant)
-        {
-            ApplicationUser appUser = await _userManager.FindByIdAsync(userInfoDto.UserId.ToString());
-            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            if (userClaims.Contains(new Claim(Claims.TenantId, tenant.Id.ToString())))
-            {
-                await _userManager.RemoveClaimAsync(appUser, new Claim(Claims.TenantId, tenant.Id.ToString()));
-                return new ApiResponse(200, "User removed as tenant user", userInfoDto);
-            }
-            return new ApiResponse(200, "User is not in tenant", userInfoDto);
-        }
-
-        public async Task<ApiResponse> GetTenantUsers(ClaimsPrincipal User)
-        {
-            ApplicationUser tenantOwner = await _userManager.GetUserAsync(User);
-            IList<Claim> tenantOwnerClaims = await _userManager.GetClaimsAsync(tenantOwner);
-            Claim tenantIdClaim = tenantOwnerClaims.FirstOrDefault(c => c.Type == "tenantid");
-            Guid TenantId = Guid.Empty;
-            if (tenantIdClaim != null)
-            {
-                TenantId = Guid.Parse(tenantIdClaim.Value);
-                List<UserInfoDto> userDtoList = new List<UserInfoDto>();
-                IList<ApplicationUser> listResponse;
-
-                try
+                foreach (ApplicationUser applicationUser in listResponse)
                 {
-                    listResponse = await _userManager.GetUsersForClaimAsync(tenantIdClaim);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(null, ex);
-                }
-
-                // create the dto object with mapped properties and fetch roles associated with each user
-                try
-                {
-                    foreach (ApplicationUser applicationUser in listResponse)
+                    userDtoList.Add(new UserInfoDto
                     {
-                        userDtoList.Add(new UserInfoDto
-                        {
-                            FirstName = applicationUser.FirstName,
-                            LastName = applicationUser.LastName,
-                            UserName = applicationUser.UserName,
-                            Email = applicationUser.Email,
-                            UserId = applicationUser.Id,
-                            //Roles = (List<string>)(await _userManager.GetRolesAsync(applicationUser).ConfigureAwait(true)) // TODO multitenancy in roles?
-                        });
-                    }
+                        FirstName = applicationUser.FirstName,
+                        LastName = applicationUser.LastName,
+                        UserName = applicationUser.UserName,
+                        Email = applicationUser.Email,
+                        UserId = applicationUser.Id,
+                        //Roles = (List<string>)(await _userManager.GetRolesAsync(applicationUser).ConfigureAwait(true)) // TODO multitenancy in roles?
+                    });
                 }
-                catch (Exception ex)
-                {
-                    throw new Exception(null, ex);
-                }
-
-                return new ApiResponse(200, "Tenant User list fetched", userDtoList);
             }
-            return new ApiResponse(200, "No tenant defined");
+            catch (Exception ex)
+            {
+                throw new Exception(null, ex);
+            }
+
+            return new ApiResponse(200, "Tenant User list fetched", userDtoList);
         }
 
-        #endregion TenantUsers
+        public async Task<ApiResponse> AddTenantManager(string UserName, Guid TenantId)
+        {
+            var user = await _userManager.FindByNameAsync(UserName);
+            if (await TryAddTenantClaim(user.Id, TenantId, TenantRole.Manager))
+                return new ApiResponse(200, "User added as tenant Manager");
+            else
+                return new ApiResponse(500, "Can not add user to tenant . Maybe they are in another tenant already.");
+        }
+
+        public async Task<ApiResponse> AddTenantUser(string UserName, Guid TenantId)
+        {
+            var user = await _userManager.FindByNameAsync(UserName);
+            if (await TryAddTenantClaim(user.Id, TenantId, TenantRole.User))
+                return new ApiResponse(200, "User added as tenant user");
+            else
+                return new ApiResponse(500, "Can not add user to tenant . Maybe they are in another tenant already.");
+        }
+
+        public async Task<ApiResponse> RemoveTenantUser(Guid UserId, Guid TenantId)
+        {
+            if (await TryRemoveTenantClaim(UserId, TenantId, TenantRole.User))
+                return new ApiResponse(200, "User removed as tenant user");
+            else
+                return new ApiResponse(200, "User is not in this tenant.");
+        }
+
+        #endregion TenantManagement
+
+        private async Task<bool> TryAddTenantClaim(Guid UserId, Guid TenantId, TenantRole claimType)
+        {
+            ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
+            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
+            Claim claim = TenantClaims.GenerateTenantClaim(TenantId, claimType);
+            if (!userClaims.Any(c => c.Type == TenantClaims.Tenant))//We only accept tenant claim for each user: Single-level Multitenancy
+            {
+                await _userManager.AddClaimAsync(appUser, claim);
+                return true;
+            }
+            return false;
+        }
+
+        private async Task<bool> TryRemoveTenantClaim(Guid UserId, Guid TenantId, TenantRole claimType)
+        {
+            ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
+            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
+            Claim claim = TenantClaims.GenerateTenantClaim(TenantId, claimType);
+            if (userClaims.Contains(claim))
+            {
+                await _userManager.RemoveClaimAsync(appUser, claim);
+                return true;
+            }
+            return false;
+        }
     }
 }

@@ -62,9 +62,9 @@ namespace BlazorBoilerplate.Server.Data
         public static void SetTenantShadowProperty<T>(ModelBuilder builder) where T : class, ITenant
         {
             // define shadow property
-            builder.Entity<T>().Property<Guid>("TenantId");
+            //builder.Entity<T>().Property<Guid>("TenantId");
             // define FK to Tenant
-            builder.Entity<T>().HasOne<Tenant>().WithMany().HasForeignKey("TenantId").OnDelete(DeleteBehavior.Restrict);
+            //builder.Entity<T>().HasOne<Tenant>().WithMany().HasForeignKey("TenantId").OnDelete(DeleteBehavior.Restrict);
         }
 
         public static void SetTenantIdClusteredIndex<T>(ModelBuilder builder) where T : class, ITenant

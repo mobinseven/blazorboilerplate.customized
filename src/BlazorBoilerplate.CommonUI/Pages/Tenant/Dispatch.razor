@@ -1,0 +1,21 @@
+﻿@page "/tenant"
+@inject ITenantApi tenantApi
+@inject NavigationManager navigationManager
+
+<h3>Dispatch</h3>
+
+@code {
+    TenantDto TenantDto;
+    protected override async Task OnInitializedAsync()
+    {
+        TenantDto = await tenantApi.GetUserTenant();
+        if (TenantDto == null)
+            navigationManager.NavigateTo("/tenant/create");
+        else
+        {
+            if ()
+                navigationManager.NavigateTo("/tenant/management");
+        }
+    }
+
+}

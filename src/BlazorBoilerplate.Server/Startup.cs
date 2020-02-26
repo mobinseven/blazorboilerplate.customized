@@ -340,6 +340,7 @@ namespace BlazorBoilerplate.Server
 
             services.AddScoped<IAuthorizeApi, AuthorizeApi>();
             services.AddScoped<IUserProfileApi, UserProfileApi>();
+            services.AddScoped<ITenantApi, TenantApi>();
             services.AddScoped<AppState>();
             services.AddMatToaster(config =>
             {

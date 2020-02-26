@@ -21,7 +21,5 @@ namespace BlazorBoilerplate.Server.Models
         public UserProfile Profile { get; set; }
 
         public virtual ICollection<Message> Messages { get; set; }
-
-        public virtual Tenant Tenant { get; set; }
     }
 }

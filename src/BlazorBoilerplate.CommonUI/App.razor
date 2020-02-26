@@ -38,12 +38,15 @@
     [Inject] IHttpContextAccessor _http { get; set; }
 #endif
 
+    [Inject] AppState appState { get; set; }
+    [Inject] ITenantApi _tenantApi { get; set; }
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         _httpClient.BaseAddress = new Uri(_navigationManager.BaseUri);
 
+        appState.Tenant = await _tenantApi.GetUserTenant();
 #if ServerSideBlazor
         // likely user refreshed page, we need to grab the cookies if they exist and pass it to the HttpClient for this request
         if (_http != null && _http.HttpContext.Request.Cookies.Any())

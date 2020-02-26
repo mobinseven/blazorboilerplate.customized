@@ -11,8 +11,8 @@ namespace BlazorBoilerplate.CommonUI
     public class AppState
     {
         public event Action OnChange;
-        private readonly IUserProfileApi _userProfileApi;
 
+        private readonly IUserProfileApi _userProfileApi;
         public UserProfileDto UserProfile { get; set; }
 
         public AppState(IUserProfileApi userProfileApi)
@@ -35,6 +35,7 @@ namespace BlazorBoilerplate.CommonUI
                 UserProfile.IsNavOpen = value;
             }
         }
+
         public bool IsNavMinified { get; set; }
 
         public async Task UpdateUserProfile()
@@ -78,7 +79,7 @@ namespace BlazorBoilerplate.CommonUI
 
         public async Task SaveLastVisitedUri(string uri)
         {
-            if (UserProfile ==  null)
+            if (UserProfile == null)
             {
                 UserProfile = await GetUserProfile();
             }
