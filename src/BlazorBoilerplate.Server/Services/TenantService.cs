@@ -191,12 +191,12 @@ namespace BlazorBoilerplate.Server.Services
 
         private async Task<bool> TryRemoveTenantClaim(Guid UserId, Guid TenantId, TenantRole claimType)
         {
-            ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
-            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            Claim claim = TenantClaims.GenerateTenantClaim(TenantId, claimType);
-            if (userClaims.Contains(claim))
+            Claim claim = TenantClaims.GenerateTenantClaim(TenantId, TenantRole.User);
+            var users = await _userManager.GetUsersForClaimAsync(claim);
+            var user = users.FirstOrDefault(u => u.Id == UserId);
+            if (user != null)
             {
-                await _userManager.RemoveClaimAsync(appUser, claim);
+                await _userManager.RemoveClaimAsync(user, claim);
                 return true;
             }
             return false;

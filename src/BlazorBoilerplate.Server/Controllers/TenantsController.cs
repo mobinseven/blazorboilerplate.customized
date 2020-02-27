@@ -88,41 +88,11 @@ namespace BlazorBoilerplate.Server.Controllers
         public async Task<ApiResponse> GetTenantUsers(Guid tenantId) => await _tenantService.GetTenantUsers(tenantId);
 
         [HttpDelete("Users/{tenantId}/{userId}")]
-        public async Task<ApiResponse> RemoveTenantUser(Guid tenantId, Guid userId)
-        {
-            if (await CheckUserAccess(tenantId))
-            {
-                if (ModelState.IsValid)
-                    return await _tenantService.RemoveTenantUser(userId, tenantId);
-                else
-                    return _invalidModel;
-            }
-            else
-                return new ApiResponse(401, "Unauthorized access to tenant");
-        }
+        [Authorize(Policy = nameof(Tenant))]
+        public async Task<ApiResponse> RemoveTenantUser(Guid tenantId, Guid userId) => await _tenantService.RemoveTenantUser(userId, tenantId);
 
         [HttpPost("Users/{tenantId}/{userName}")]
         [Authorize(Policy = nameof(Tenant))]
-        public async Task<ApiResponse> AddTenantUser(Guid tenantId, string userName)
-        {
-            if (ModelState.IsValid)
-                return await _tenantService.AddTenantUser(userName, tenantId);
-            else
-                return _invalidModel;
-        }
-
-        private async Task<bool> CheckUserAccess(Guid tenantId)
-        {
-            //we must control the request is issued from tenant manager. Should this  be done with an Authorization Attribute? In this implementation user does not need to sign out and sign in again to gain access (because we use claims to authorize) as we fetch claims directly from db.
-
-            Claim managerClaim = TenantClaims.GenerateTenantClaim(tenantId, TenantRole.Manager);
-            var user = await _userManager.FindByNameAsync(User.Identity.Name);
-            var userClaims = await _userManager.GetClaimsAsync(user);
-            if (!userClaims.Any(c => c.Value == managerClaim.Value))
-            {
-                return false;
-            }
-            return true;
-        }
+        public async Task<ApiResponse> AddTenantUser(Guid tenantId, string userName) => await _tenantService.AddTenantUser(userName, tenantId);
     }
 }

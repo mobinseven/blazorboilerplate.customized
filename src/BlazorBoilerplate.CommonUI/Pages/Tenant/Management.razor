@@ -86,7 +86,7 @@ else
     }
     public async Task RemoveUserAsync(Guid userId)
     {
-        var apiResponse = await Http.DeleteAsync($"api/Tenants/Users/{tenantDto.Id}/{userInfo.UserName}");
+        var apiResponse = await Http.DeleteAsync($"api/Tenants/Users/{tenantDto.Id}/{userId}");
         if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
             matToaster.Add("User removed", MatToastType.Success);
