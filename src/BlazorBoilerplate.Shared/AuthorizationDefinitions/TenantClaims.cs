@@ -33,7 +33,7 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
 
     public static class TenantClaims
     {
-        public const string Tenant = "Tenant";
+        public const string Tenant = nameof(Tenant);
 
         public static Claim GenerateTenantClaim(Guid TenantId, TenantRole roleInTenant) => new Claim(Tenant, roleInTenant + ":" + TenantId.ToString());
 

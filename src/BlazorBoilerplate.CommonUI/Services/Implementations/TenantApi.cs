@@ -12,6 +12,8 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
 {
     public class TenantApi : ITenantApi
     {
+        public TenantDto Tenant { get; set; }
+        public BlazorBoilerplate.Shared.AuthorizationDefinitions.TenantRole TenantRole { get; set; }
         private readonly HttpClient _httpClient;
 
         public TenantApi(HttpClient httpClient)
@@ -22,10 +24,12 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
         public async Task<TenantDto> GetUserTenant()
         {
             ApiResponseDto apiResponse = await _httpClient.GetJsonAsync<ApiResponseDto>("api/Tenants/GetUserTenant");
-            TenantDto tenant = null;
             if (apiResponse.Result != null)
-                tenant = JsonConvert.DeserializeObject<TenantDto>(apiResponse.Result.ToString());
-            return tenant;
+            {
+                Tenant = JsonConvert.DeserializeObject<TenantDto>(apiResponse.Result.ToString());
+            }
+
+            return Tenant;
         }
     }
 }
