@@ -68,20 +68,8 @@ namespace BlazorBoilerplate.Server.Data
                 }
                 if (typeof(ISoftDelete).IsAssignableFrom(t))
                 {
-                    //TODO future for Tenant
-                    //if (typeof(ITenantEntity).IsAssignableFrom(t))
-                    //{
-                    //    // softdeletable and tenant (note do not filter just ITenant - too much filtering!
-                    //    // just top level classes that have ITenantEntity
-                    //    var method = SetGlobalQueryForSoftDeleteAndTenantMethodInfo.MakeGenericMethod(t);
-                    //    method.Invoke(this, new object[] { modelBuilder });
-                    //}
-                    //else
-                    //{
-                    // softdeletable
                     MethodInfo method = SetGlobalQueryForSoftDeleteMethodInfo.MakeGenericMethod(t);
                     method.Invoke(this, new object[] { modelBuilder });
-                    //}
                 }
             }
         }
@@ -92,24 +80,14 @@ namespace BlazorBoilerplate.Server.Data
         private static readonly MethodInfo SetGlobalQueryForTenantMethodInfo = typeof(ApplicationDbContext).GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Single(t => t.IsGenericMethod && t.Name == "SetGlobalQueryForTenant");
 
-        private static readonly MethodInfo SetGlobalQueryForSoftDeleteAndTenantMethodInfo = typeof(ApplicationDbContext).GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                .Single(t => t.IsGenericMethod && t.Name == "SetGlobalQueryForSoftDeleteAndTenant");
-
         public void SetGlobalQueryForSoftDelete<T>(ModelBuilder builder) where T : class, ISoftDelete
         {
             builder.Entity<T>().HasQueryFilter(item => !EF.Property<bool>(item, "IsDeleted"));
         }
 
-        public void SetGlobalQueryForTenant<T>(ModelBuilder builder) where T : class, ISoftDelete
+        public void SetGlobalQueryForTenant<T>(ModelBuilder builder) where T : class, ITenant
         {
             builder.Entity<T>().HasQueryFilter(item => (_userSession.DisableTenantFilter || EF.Property<Guid>(item, "TenantId") == _userSession.TenantId));
-        }
-
-        public void SetGlobalQueryForSoftDeleteAndTenant<T>(ModelBuilder builder) where T : class, ISoftDelete, ITenant
-        {
-            builder.Entity<T>().HasQueryFilter(
-                item => !EF.Property<bool>(item, "IsDeleted") &&
-                        (_userSession.DisableTenantFilter || EF.Property<Guid>(item, "TenantId") == _userSession.TenantId));
         }
 
         public override int SaveChanges()
