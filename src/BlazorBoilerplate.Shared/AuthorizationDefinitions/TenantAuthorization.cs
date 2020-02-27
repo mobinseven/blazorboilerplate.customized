@@ -8,34 +8,24 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
     public enum TenantRole//TODO ITenant for IdentityRole? (multitenancy in roles)
     {
         Manager,
-        User
+        User,
+        Any
     }
 
-    //public class TenantClaim
-    //{
-    //    public TenantRole RoleInTenant { get; set; }
-    //    public Guid TenantId { get; set; }
-    //    public Claim Claim { get; set; }
-
-    //    public TenantClaim(Claim claim)
-    //    {
-    //        Claim = claim;
-    //        TenantId = TenantClaims.ExtractTenantId(claim);
-    //        RoleInTenant = TenantClaims.ExtractTenantRole(claim);
-    //    }
-
-    //    public TenantClaim(string claimValue)
-    //    {
-    //        TenantId = TenantClaims.ExtractTenantId(claimValue);
-    //        RoleInTenant = TenantClaims.ExtractTenantRole(claimValue);
-    //    }
-    //}
-
-    public static class TenantClaims
+    public static class TenantAuthorization
     {
-        public const string Tenant = nameof(Tenant);
+        public const string TenantClaimType = "Tenant";
 
-        public static Claim GenerateTenantClaim(Guid TenantId, TenantRole roleInTenant) => new Claim(Tenant, roleInTenant + ":" + TenantId.ToString());
+        public static class Policies
+        {
+            public const string Manager = "TenantManagerPolicy";
+            public const string User = "TenantUserPoilcy";
+            public const string Everyone = "TenantEveryonePolicy";
+        }
+
+        public static Claim GenerateTenantClaim(Guid TenantId, TenantRole roleInTenant) => new Claim(TenantClaimType, roleInTenant + ":" + TenantId.ToString());
+
+        public static string GenerateTenantClaimValue(Guid TenantId, TenantRole roleInTenant) => roleInTenant + ":" + TenantId.ToString();
 
         public static Guid ExtractTenantId(Claim claim) => new Guid(claim.Value.Substring(claim.Value.IndexOf(':') + 1));
 

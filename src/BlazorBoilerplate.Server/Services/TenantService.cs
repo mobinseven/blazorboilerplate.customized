@@ -112,7 +112,7 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> GetTenantUsers(Guid TenantId)
         {
-            Claim userClaim = TenantClaims.GenerateTenantClaim(TenantId, TenantRole.User);
+            Claim userClaim = TenantAuthorization.GenerateTenantClaim(TenantId, TenantRole.User);
             List<UserInfoDto> userDtoList = new List<UserInfoDto>();
             IList<ApplicationUser> listResponse;
             try
@@ -180,8 +180,8 @@ namespace BlazorBoilerplate.Server.Services
         {
             ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
             IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            Claim claim = TenantClaims.GenerateTenantClaim(TenantId, claimType);
-            if (!userClaims.Any(c => c.Type == TenantClaims.Tenant))//We only accept tenant claim for each user: Single-level Multitenancy
+            Claim claim = TenantAuthorization.GenerateTenantClaim(TenantId, claimType);
+            if (!userClaims.Any(c => c.Type == TenantAuthorization.TenantClaimType))//We only accept tenant claim for each user: Single-level Multitenancy
             {
                 await _userManager.AddClaimAsync(appUser, claim);
                 return true;
@@ -191,7 +191,7 @@ namespace BlazorBoilerplate.Server.Services
 
         private async Task<bool> TryRemoveTenantClaim(Guid UserId, Guid TenantId, TenantRole claimType)
         {
-            Claim claim = TenantClaims.GenerateTenantClaim(TenantId, TenantRole.User);
+            Claim claim = TenantAuthorization.GenerateTenantClaim(TenantId, TenantRole.User);
             var users = await _userManager.GetUsersForClaimAsync(claim);
             var user = users.FirstOrDefault(u => u.Id == UserId);
             if (user != null)

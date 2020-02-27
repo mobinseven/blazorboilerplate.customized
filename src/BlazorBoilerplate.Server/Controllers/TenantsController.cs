@@ -48,11 +48,11 @@ namespace BlazorBoilerplate.Server.Controllers
         [HttpGet("GetUserTenant")]
         public async Task<ApiResponse> GetUserTenant()
         {
-            Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantClaims.Tenant);
+            Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantAuthorization.TenantClaimType);
             Guid TenantId = Guid.Empty;
             if (claim != null)
             {
-                TenantId = TenantClaims.ExtractTenantId(claim.Value);
+                TenantId = TenantAuthorization.ExtractTenantId(claim.Value);
             }
             return await _tenantService.GetTenant(TenantId);
         }

@@ -34,7 +34,7 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
             if (IsAuthenticated)
             {
                 userInfo = await _authorizeApi.GetUserInfo();
-                Tenant.Id = TenantClaims.ExtractTenantId(userInfo.ExposedClaims.Find(c => c.Key == TenantClaims.Tenant).Value);
+                Tenant.Id = TenantAuthorization.ExtractTenantId(userInfo.ExposedClaims.Find(c => c.Key == TenantAuthorization.TenantClaimType).Value);
             }
 
             return Tenant;

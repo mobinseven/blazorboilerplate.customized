@@ -8,7 +8,6 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
     public static class Policies
     {
         public const string IsAdmin = "IsAdmin";
-        public const string IsTenantManager = "IsTenantManager";
         public const string IsUser = "IsUser";
         public const string IsReadOnly = "IsReadOnly";
         public const string IsMyDomain = "IsMyDomain";
@@ -18,14 +17,6 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
             return new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .RequireClaim("IsAdministrator")
-                .Build();
-        }
-
-        public static AuthorizationPolicy IsTenantManagerPolicy()
-        {
-            return new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .RequireClaim(IsTenantManager)
                 .Build();
         }
 

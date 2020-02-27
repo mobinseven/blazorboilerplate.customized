@@ -219,11 +219,15 @@ namespace BlazorBoilerplate.Server
             services.AddAuthorization(options =>
             {
                 options.AddPolicy(Policies.IsAdmin, Policies.IsAdminPolicy());
-                options.AddPolicy(Policies.IsTenantManager, Policies.IsTenantManagerPolicy());
                 options.AddPolicy(Policies.IsUser, Policies.IsUserPolicy());
                 options.AddPolicy(Policies.IsReadOnly, Policies.IsReadOnlyPolicy());
                 options.AddPolicy(Policies.IsMyDomain, Policies.IsMyDomainPolicy());  // valid only on serverside operations
-                options.AddPolicy(nameof(Tenant), policy =>
+                // Tenants
+                options.AddPolicy(TenantAuthorization.Policies.Manager, policy =>
+            policy.Requirements.Add(new TenantRequirement(TenantRole.Manager)));
+                options.AddPolicy(TenantAuthorization.Policies.User, policy =>
+            policy.Requirements.Add(new TenantRequirement(TenantRole.Manager)));
+                options.AddPolicy(TenantAuthorization.Policies.Everyone, policy =>
             policy.Requirements.Add(new TenantRequirement()));
             });
 

@@ -1,5 +1,4 @@
-﻿using BlazorBoilerplate.Server.Data;
-using BlazorBoilerplate.Server.Models;
+﻿using BlazorBoilerplate.Server.Models;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -7,12 +6,24 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BlazorBoilerplate.Server.Authorization
 {
     public class TenantRequirement : IAuthorizationRequirement
     {
+        public TenantRole TenantRole { get; private set; }
+
+        public TenantRequirement(TenantRole tenantRole)
+        {
+            TenantRole = tenantRole;
+        }
+
+        public TenantRequirement()
+        {
+            TenantRole = TenantRole.Any;
+        }
     }
 
     public class TenantAuthorizationHandler : AuthorizationHandler<TenantRequirement>
@@ -29,14 +40,45 @@ namespace BlazorBoilerplate.Server.Authorization
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context,
                                                        TenantRequirement requirement)
         {
-            var tenantId = _httpContext.Request.RouteValues["TenantId"];
-            if (Guid.TryParse(tenantId.ToString(), out Guid TenantId))
+            ApplicationUser user = await _userManager.GetUserAsync(context.User);
+            IList<Claim> userClaims = await _userManager.GetClaimsAsync(user);
+            object tenantId = _httpContext.Request.RouteValues["TenantId"];
+            if (tenantId != null)// tenantId specified
             {
-                var users = await _userManager.GetUsersForClaimAsync(TenantClaims.GenerateTenantClaim(TenantId, TenantRole.Manager));
-                var user = users.FirstOrDefault(u => u.UserName == context.User.Identity.Name);
-                if (user != null)
+                if (Guid.TryParse(tenantId.ToString(), out Guid TenantId))
                 {
-                    context.Succeed(requirement);
+                    if (requirement.TenantRole == TenantRole.Any)// tenant role not specified
+                    {
+                        if (userClaims.Any(c => c.Type == TenantAuthorization.TenantClaimType && TenantAuthorization.ExtractTenantId(c) == TenantId))
+                        {
+                            context.Succeed(requirement);
+                        }
+                    }
+                    else// tenant role specified
+                    {
+                        if (userClaims.Any(c => c.Type == TenantAuthorization.TenantClaimType &&
+                        c.Value == TenantAuthorization.GenerateTenantClaimValue(TenantId, requirement.TenantRole)))
+                        {
+                            context.Succeed(requirement);
+                        }
+                    }
+                }
+            }
+            else// tenantId not specified
+            {
+                if (requirement.TenantRole == TenantRole.Any)// tenant role not specified
+                {
+                    if (userClaims.Any(c => c.Type == TenantAuthorization.TenantClaimType))
+                    {
+                        context.Succeed(requirement);
+                    }
+                }
+                else// tenant role specified
+                {
+                    if (userClaims.Any(c => c.Type == TenantAuthorization.TenantClaimType && TenantAuthorization.ExtractTenantRole(c) == requirement.TenantRole))
+                    {
+                        context.Succeed(requirement);
+                    }
                 }
             }
         }
