@@ -223,10 +223,12 @@ namespace BlazorBoilerplate.Server
                 options.AddPolicy(Policies.IsUser, Policies.IsUserPolicy());
                 options.AddPolicy(Policies.IsReadOnly, Policies.IsReadOnlyPolicy());
                 options.AddPolicy(Policies.IsMyDomain, Policies.IsMyDomainPolicy());  // valid only on serverside operations
+                options.AddPolicy(nameof(Tenant), policy =>
+            policy.Requirements.Add(new TenantRequirement()));
             });
 
             services.AddTransient<IAuthorizationHandler, DomainRequirementHandler>();
-
+            services.AddTransient<IAuthorizationHandler, TenantAuthorizationHandler>();
             services.Configure<IdentityOptions>(options =>
             {
                 // Password settings
@@ -322,6 +324,8 @@ namespace BlazorBoilerplate.Server
             services.AddTransient<IApiLogService, ApiLogService>();
             services.AddTransient<ITodoService, ToDoService>();
             services.AddTransient<IMessageService, MessageService>();
+
+            services.AddTransient<ITenantService, TenantService>();
 
             // DB Creation and Seeding
             services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();

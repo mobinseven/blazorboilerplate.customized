@@ -40,8 +40,7 @@ else
 
 @code {
     ApiResponseDto apiResponse;
-    List<UserInfoDto> users;
-    UserInfoDto ManagerInfo;
+    List<UserInfoDto> users = new List<UserInfoDto>();
     TenantDto tenantDto = new TenantDto();
     UserInfoDto userInfo = new UserInfoDto();
 
@@ -53,7 +52,6 @@ else
     public async Task RetrieveUserListAsync()
     {
         tenantDto = await tenantApi.GetUserTenant();
-
         apiResponse = await Http.GetJsonAsync<ApiResponseDto>($"api/Tenants/Users/{tenantDto.Id}");
 
         if (apiResponse.StatusCode == 200)
@@ -63,7 +61,7 @@ else
         }
         else
         {
-            matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "User Retrieval Failed");
+            matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Users Retrieval Failed");
         }
     }
     public async Task AddUserAsync()

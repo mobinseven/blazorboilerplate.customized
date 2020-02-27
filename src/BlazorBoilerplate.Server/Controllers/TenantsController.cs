@@ -84,13 +84,8 @@ namespace BlazorBoilerplate.Server.Controllers
         public async Task<ApiResponse> DeleteTenant(Guid id) => await _tenantService.DeleteTenant(id);
 
         [HttpGet("Users/{tenantId}")]
-        public async Task<ApiResponse> GetTenantUsers(Guid tenantId)
-        {
-            if (await CheckUserAccess(tenantId))
-                return await _tenantService.GetTenantUsers(tenantId);
-            else
-                return new ApiResponse(401, "Unauthorized access to tenant");
-        }
+        [Authorize(Policy = nameof(Tenant))]
+        public async Task<ApiResponse> GetTenantUsers(Guid tenantId) => await _tenantService.GetTenantUsers(tenantId);
 
         [HttpDelete("Users/{tenantId}/{userId}")]
         public async Task<ApiResponse> RemoveTenantUser(Guid tenantId, Guid userId)
@@ -107,17 +102,13 @@ namespace BlazorBoilerplate.Server.Controllers
         }
 
         [HttpPost("Users/{tenantId}/{userName}")]
+        [Authorize(Policy = nameof(Tenant))]
         public async Task<ApiResponse> AddTenantUser(Guid tenantId, string userName)
         {
-            if (await CheckUserAccess(tenantId))
-            {
-                if (ModelState.IsValid)
-                    return await _tenantService.AddTenantUser(userName, tenantId);
-                else
-                    return _invalidModel;
-            }
+            if (ModelState.IsValid)
+                return await _tenantService.AddTenantUser(userName, tenantId);
             else
-                return new ApiResponse(401, "Unauthorized access to tenant");
+                return _invalidModel;
         }
 
         private async Task<bool> CheckUserAccess(Guid tenantId)

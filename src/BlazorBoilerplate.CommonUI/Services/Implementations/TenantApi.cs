@@ -1,4 +1,5 @@
 ﻿using BlazorBoilerplate.CommonUI.Services.Contracts;
+using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using BlazorBoilerplate.Shared.Dto;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
@@ -12,21 +13,28 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
 {
     public class TenantApi : ITenantApi
     {
-        public TenantDto Tenant { get; set; }
+        public TenantDto Tenant { get; set; } = new TenantDto();
         public BlazorBoilerplate.Shared.AuthorizationDefinitions.TenantRole TenantRole { get; set; }
-        private readonly HttpClient _httpClient;
+        private readonly IAuthorizeApi _authorizeApi;
 
-        public TenantApi(HttpClient httpClient)
+        public TenantApi(IAuthorizeApi authorizeApi)
         {
-            _httpClient = httpClient;
+            _authorizeApi = authorizeApi;
         }
 
         public async Task<TenantDto> GetUserTenant()
         {
-            ApiResponseDto apiResponse = await _httpClient.GetJsonAsync<ApiResponseDto>("api/Tenants/GetUserTenant");
-            if (apiResponse.Result != null)
+            //ApiResponseDto apiResponse = await _httpClient.GetJsonAsync<ApiResponseDto>("api/Tenants/GetUserTenant");
+            //if (apiResponse.Result != null)
+            //{
+            //    Tenant = JsonConvert.DeserializeObject<TenantDto>(apiResponse.Result.ToString());
+            //}
+            UserInfoDto userInfo = await _authorizeApi.GetUser();
+            bool IsAuthenticated = userInfo.IsAuthenticated;
+            if (IsAuthenticated)
             {
-                Tenant = JsonConvert.DeserializeObject<TenantDto>(apiResponse.Result.ToString());
+                userInfo = await _authorizeApi.GetUserInfo();
+                Tenant.Id = TenantClaims.ExtractTenantId(userInfo.ExposedClaims.Find(c => c.Key == TenantClaims.Tenant).Value);
             }
 
             return Tenant;

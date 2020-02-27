@@ -53,9 +53,4 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
             .Build();
         }
     }
-
-    public static class Claims
-    {
-        public const string TenantId = "TenantId";
-    }
 }

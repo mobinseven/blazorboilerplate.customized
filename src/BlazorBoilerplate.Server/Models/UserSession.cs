@@ -9,7 +9,7 @@ namespace BlazorBoilerplate.Server.Models
         public bool IsAuthenticated { get; set; }
         public Guid UserId { get; set; }
         public string UserName { get; set; }
-        public int TenantId { get; set; } = -1;
+        public Guid TenantId { get; set; } = Guid.Empty;
         public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
