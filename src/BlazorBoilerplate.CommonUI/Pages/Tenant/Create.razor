@@ -1,7 +1,7 @@
 ﻿@inject IMatToaster matToaster
 @inject NavigationManager navigationManager
 @inject HttpClient Http
-
+@inject IAuthorizeApi AuthorizeApi
 <h3>Create new tenant</h3>
 <EditForm Model="@tenantDto" OnValidSubmit="CreateTenantAsync">
     <DataAnnotationsValidator />
@@ -20,7 +20,9 @@
         ApiResponseDto apiResponse = await Http.PostJsonAsync<ApiResponseDto>("api/Tenants", tenantDto);
         if (apiResponse.StatusCode == 200)
         {
-            navigationManager.NavigateTo("/tenant/management");
+            //navigationManager.NavigateTo("/tenant");
+            await AuthorizeApi.Logout();//force logout because claims must be refreshed.
+            navigationManager.NavigateTo("/account/login");
         }
         else
         {
