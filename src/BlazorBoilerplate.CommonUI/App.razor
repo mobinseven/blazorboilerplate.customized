@@ -39,7 +39,6 @@
 #endif
 
     [Inject] AppState appState { get; set; }
-    [Inject] ITenantApi _tenantApi { get; set; }
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

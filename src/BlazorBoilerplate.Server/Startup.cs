@@ -223,12 +223,21 @@ namespace BlazorBoilerplate.Server
                 options.AddPolicy(Policies.IsReadOnly, Policies.IsReadOnlyPolicy());
                 options.AddPolicy(Policies.IsMyDomain, Policies.IsMyDomainPolicy());  // valid only on serverside operations
                 // Tenants
-                options.AddPolicy(TenantAuthorization.Policies.Manager, policy =>
-            policy.Requirements.Add(new TenantRequirement(TenantRole.Manager)));
-                options.AddPolicy(TenantAuthorization.Policies.User, policy =>
-            policy.Requirements.Add(new TenantRequirement(TenantRole.User)));
-                options.AddPolicy(TenantAuthorization.Policies.Everyone, policy =>
-            policy.Requirements.Add(new TenantRequirement()));
+                options.AddPolicy(TenantAuthorization.Policies.Manager,
+                    new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .AddRequirements(new TenantRequirement(TenantRole.Manager))
+                .Build());
+                options.AddPolicy(TenantAuthorization.Policies.User,
+                    new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .AddRequirements(new TenantRequirement(TenantRole.User))
+                .Build());
+                options.AddPolicy(TenantAuthorization.Policies.Everyone,
+                    new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .AddRequirements(new TenantRequirement())
+                .Build());
             });
 
             services.AddTransient<IAuthorizationHandler, DomainRequirementHandler>();
@@ -348,7 +357,7 @@ namespace BlazorBoilerplate.Server
 
             services.AddScoped<IAuthorizeApi, AuthorizeApi>();
             services.AddScoped<IUserProfileApi, UserProfileApi>();
-            services.AddScoped<ITenantApi, TenantApi>();
+            services.AddScoped<TenantApi>();
             services.AddScoped<AppState>();
             services.AddMatToaster(config =>
             {

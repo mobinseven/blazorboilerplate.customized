@@ -20,6 +20,8 @@ namespace BlazorBoilerplate.Server.Data
         public DbSet<Todo> Todos { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<Book> Books { get; set; }
+
         private IUserSession _userSession { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)

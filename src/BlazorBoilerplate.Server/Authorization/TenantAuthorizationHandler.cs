@@ -28,20 +28,22 @@ namespace BlazorBoilerplate.Server.Authorization
 
     public class TenantAuthorizationHandler : AuthorizationHandler<TenantRequirement>
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        //private readonly UserManager<ApplicationUser> _userManager;
         private readonly HttpContext _httpContext;
 
         public TenantAuthorizationHandler(UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor)
         {
-            _userManager = userManager;
+            //_userManager = userManager;
             _httpContext = httpContextAccessor.HttpContext;
         }
 
-        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context,
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
                                                        TenantRequirement requirement)
         {
-            //ApplicationUser user = await _userManager.GetUserAsync(context.User);
-            IList<Claim> userClaims = _httpContext.User.Claims.ToList();//await _userManager.GetClaimsAsync(user);
+            //ApplicationUser user = await _userManager.GetUserAsync(context.User);//ConcurrencyException
+            //IList<Claim> userClaims = await _userManager.GetClaimsAsync(user);
+
+            IList<Claim> userClaims = _httpContext.User.Claims.ToList();
             object tenantId = _httpContext.Request.RouteValues["TenantId"];
 
             if (tenantId != null)// tenantId specified
@@ -82,8 +84,7 @@ namespace BlazorBoilerplate.Server.Authorization
                     }
                 }
             }
-            await Task.CompletedTask;
-            //return Task.CompletedTask;
+            return Task.CompletedTask;
         }
     }
 }

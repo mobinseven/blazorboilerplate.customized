@@ -1,28 +1,30 @@
 ﻿@page "/tenant"
-@inject ITenantApi tenantApi
+@attribute [Authorize]
+@inject TenantApi tenantApi
 @inject NavigationManager navigationManager
 
 @if (TenantDto != null)
 {
-    <h3>@TenantDto.Title</h3>
-
-    <AuthorizeView Policy="@TenantAuthorization.Policies.Manager">
+    <AuthorizeView Policy="@TenantAuthorization.Policies.Everyone">
         <Authorized>
-            <h1>Hello, @context.User.Identity.Name!</h1>
-            <p>You can only see this content if you're authenticated.</p>
-            <p>Only tenant managers can see this.</p>
+            <h3>@TenantDto.Title</h3>
         </Authorized>
         <NotAuthorized>
+            <Create></Create>
         </NotAuthorized>
     </AuthorizeView>
+
+    <AuthorizeView Policy="@TenantAuthorization.Policies.Manager">
+        <h1>Hello, @context.User.Identity.Name!</h1>
+        <p>You can only see this content if you're authenticated.</p>
+        <p>Only tenant managers can see this.</p>
+        <Management></Management>
+    </AuthorizeView>
+
     <AuthorizeView Policy="@TenantAuthorization.Policies.User">
-        <Authorized>
-            <h1>Hello, @context.User.Identity.Name!</h1>
-            <p>You can only see this content if you're authenticated.</p>
-            <p>Only tenant users can see this.</p>
-        </Authorized>
-        <NotAuthorized>
-        </NotAuthorized>
+        <h1>Hello, @context.User.Identity.Name!</h1>
+        <p>You can only see this content if you're authenticated.</p>
+        <p>Only tenant users can see this.</p>
     </AuthorizeView>
 
 }

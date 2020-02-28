@@ -3,7 +3,7 @@
 @inject AuthenticationStateProvider authStateProvider
 @inject IMatToaster matToaster
 @inject AppState appState
-@inject ITenantApi tenantApi
+@inject TenantApi tenantApi
 
 <h3>@tenantDto.Title Management Panel</h3>
 @if (users == null)
@@ -50,7 +50,7 @@ else
 
     public async Task RetrieveUserListAsync()
     {
-        tenantDto = await tenantApi.GetUserTenant();
+        tenantDto = tenantApi.Tenant;
         apiResponse = await Http.GetJsonAsync<ApiResponseDto>($"api/Tenants/Users/{tenantDto.Id}");
 
         if (apiResponse.StatusCode == 200)
