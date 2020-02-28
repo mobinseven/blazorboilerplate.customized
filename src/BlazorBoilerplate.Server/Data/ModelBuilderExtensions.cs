@@ -28,8 +28,6 @@ namespace BlazorBoilerplate.Server.Data
                 {
                     var method = SetTenantShadowPropertyMethodInfo.MakeGenericMethod(t);
                     method.Invoke(modelBuilder, new object[] { modelBuilder });
-
-                    SetTenantIdClusteredIndexsMethodInfo.MakeGenericMethod(t).Invoke(modelBuilder, new object[] { modelBuilder });
                 }
 
                 // set soft delete property
@@ -47,9 +45,6 @@ namespace BlazorBoilerplate.Server.Data
         private static readonly MethodInfo SetTenantShadowPropertyMethodInfo = typeof(ModelBuilderExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(t => t.IsGenericMethod && t.Name == "SetTenantShadowProperty");
 
-        private static readonly MethodInfo SetTenantIdClusteredIndexsMethodInfo = typeof(ModelBuilderExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(t => t.IsGenericMethod && t.Name == "SetTenantIdClusteredIndex");
-
         private static readonly MethodInfo SetAuditingShadowPropertiesMethodInfo = typeof(ModelBuilderExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(t => t.IsGenericMethod && t.Name == "SetAuditingShadowProperties");
 
@@ -65,12 +60,6 @@ namespace BlazorBoilerplate.Server.Data
             builder.Entity<T>().Property<Guid>("TenantId");
             // define FK to Tenant
             builder.Entity<T>().HasOne<Tenant>().WithMany().HasForeignKey("TenantId").OnDelete(DeleteBehavior.Restrict);
-        }
-
-        public static void SetTenantIdClusteredIndex<T>(ModelBuilder builder) where T : class, ITenant
-        {
-            //TODO PK must be clustered?
-            builder.Entity<T>().HasIndex("TenantId").IsClustered().IsUnique(false);
         }
 
         public static void SetAuditingShadowProperties<T>(ModelBuilder builder) where T : class, IAuditable
