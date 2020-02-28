@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace BlazorBoilerplate.Server.Data
 {
     //https://trailheadtechnology.com/entity-framework-core-2-1-automate-all-that-boring-boiler-plate/
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
     {
         public DbSet<ApiLogItem> ApiLogs { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }

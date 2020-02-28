@@ -100,8 +100,8 @@ namespace BlazorBoilerplate.Server
 
             services.AddDbContext<ApplicationDbContext>(DbContextOptionsBuilder);
 
-            services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
-                .AddRoles<IdentityRole<Guid>>()
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddRoles<ApplicationRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
