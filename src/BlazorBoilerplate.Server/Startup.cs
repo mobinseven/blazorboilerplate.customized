@@ -226,7 +226,7 @@ namespace BlazorBoilerplate.Server
                 options.AddPolicy(TenantAuthorization.Policies.Manager, policy =>
             policy.Requirements.Add(new TenantRequirement(TenantRole.Manager)));
                 options.AddPolicy(TenantAuthorization.Policies.User, policy =>
-            policy.Requirements.Add(new TenantRequirement(TenantRole.Manager)));
+            policy.Requirements.Add(new TenantRequirement(TenantRole.User)));
                 options.AddPolicy(TenantAuthorization.Policies.Everyone, policy =>
             policy.Requirements.Add(new TenantRequirement()));
             });

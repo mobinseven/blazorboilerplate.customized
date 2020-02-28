@@ -40,9 +40,10 @@ namespace BlazorBoilerplate.Server.Authorization
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context,
                                                        TenantRequirement requirement)
         {
-            ApplicationUser user = await _userManager.GetUserAsync(context.User);
-            IList<Claim> userClaims = await _userManager.GetClaimsAsync(user);
+            //ApplicationUser user = await _userManager.GetUserAsync(context.User);
+            IList<Claim> userClaims = _httpContext.User.Claims.ToList();//await _userManager.GetClaimsAsync(user);
             object tenantId = _httpContext.Request.RouteValues["TenantId"];
+
             if (tenantId != null)// tenantId specified
             {
                 if (Guid.TryParse(tenantId.ToString(), out Guid TenantId))
@@ -81,6 +82,8 @@ namespace BlazorBoilerplate.Server.Authorization
                     }
                 }
             }
+            await Task.CompletedTask;
+            //return Task.CompletedTask;
         }
     }
 }

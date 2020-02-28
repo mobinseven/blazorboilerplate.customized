@@ -84,15 +84,15 @@ namespace BlazorBoilerplate.Server.Controllers
         public async Task<ApiResponse> DeleteTenant(Guid id) => await _tenantService.DeleteTenant(id);
 
         [HttpGet("Users/{tenantId}")]
-        [Authorize(Policy = nameof(Tenant))]
+        [Authorize(Policy = TenantAuthorization.Policies.Manager)]
         public async Task<ApiResponse> GetTenantUsers(Guid tenantId) => await _tenantService.GetTenantUsers(tenantId);
 
         [HttpDelete("Users/{tenantId}/{userId}")]
-        [Authorize(Policy = nameof(Tenant))]
+        [Authorize(Policy = TenantAuthorization.Policies.Manager)]
         public async Task<ApiResponse> RemoveTenantUser(Guid tenantId, Guid userId) => await _tenantService.RemoveTenantUser(userId, tenantId);
 
         [HttpPost("Users/{tenantId}/{userName}")]
-        [Authorize(Policy = nameof(Tenant))]
+        [Authorize(Policy = TenantAuthorization.Policies.Manager)]
         public async Task<ApiResponse> AddTenantUser(Guid tenantId, string userName) => await _tenantService.AddTenantUser(userName, tenantId);
     }
 }

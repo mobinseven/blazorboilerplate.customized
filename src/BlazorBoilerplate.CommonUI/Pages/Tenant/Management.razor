@@ -1,6 +1,4 @@
-﻿@page "/tenant/management"
-@attribute [Authorize(Policy = "Tenant")]
-@inject HttpClient Http
+﻿@inject HttpClient Http
 @inject IAuthorizationService AuthorizationService
 @inject AuthenticationStateProvider authStateProvider
 @inject IMatToaster matToaster

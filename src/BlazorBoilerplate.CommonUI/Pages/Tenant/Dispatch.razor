@@ -2,19 +2,35 @@
 @inject ITenantApi tenantApi
 @inject NavigationManager navigationManager
 
-<h3>Dispatch</h3>
+@if (TenantDto != null)
+{
+    <h3>@TenantDto.Title</h3>
 
+    <AuthorizeView Policy="@TenantAuthorization.Policies.Manager">
+        <Authorized>
+            <h1>Hello, @context.User.Identity.Name!</h1>
+            <p>You can only see this content if you're authenticated.</p>
+            <p>Only tenant managers can see this.</p>
+        </Authorized>
+        <NotAuthorized>
+        </NotAuthorized>
+    </AuthorizeView>
+    <AuthorizeView Policy="@TenantAuthorization.Policies.User">
+        <Authorized>
+            <h1>Hello, @context.User.Identity.Name!</h1>
+            <p>You can only see this content if you're authenticated.</p>
+            <p>Only tenant users can see this.</p>
+        </Authorized>
+        <NotAuthorized>
+        </NotAuthorized>
+    </AuthorizeView>
+
+}
 @code {
     TenantDto TenantDto;
     protected override async Task OnInitializedAsync()
     {
         TenantDto = await tenantApi.GetUserTenant();
-        if (TenantDto == null)
-            navigationManager.NavigateTo("/tenant/create");
-        else
-        {
-            navigationManager.NavigateTo("/tenant/management");
-        }
     }
 
 }

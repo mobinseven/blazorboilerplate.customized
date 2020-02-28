@@ -16,27 +16,28 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
         public TenantDto Tenant { get; set; } = new TenantDto();
         public BlazorBoilerplate.Shared.AuthorizationDefinitions.TenantRole TenantRole { get; set; }
         private readonly IAuthorizeApi _authorizeApi;
+        private readonly HttpClient _httpClient;
 
-        public TenantApi(IAuthorizeApi authorizeApi)
+        public TenantApi(IAuthorizeApi authorizeApi, HttpClient httpClient)
         {
             _authorizeApi = authorizeApi;
+            _httpClient = httpClient;
         }
 
         public async Task<TenantDto> GetUserTenant()
         {
-            //ApiResponseDto apiResponse = await _httpClient.GetJsonAsync<ApiResponseDto>("api/Tenants/GetUserTenant");
-            //if (apiResponse.Result != null)
+            //UserInfoDto userInfo = await _authorizeApi.GetUser();
+            //bool IsAuthenticated = userInfo.IsAuthenticated;
+            //if (IsAuthenticated)
             //{
-            //    Tenant = JsonConvert.DeserializeObject<TenantDto>(apiResponse.Result.ToString());
+            //    userInfo = await _authorizeApi.GetUserInfo();
+            //    Tenant.Id = TenantAuthorization.ExtractTenantId(userInfo.ExposedClaims.Find(c => c.Key == TenantAuthorization.TenantClaimType).Value);
             //}
-            UserInfoDto userInfo = await _authorizeApi.GetUser();
-            bool IsAuthenticated = userInfo.IsAuthenticated;
-            if (IsAuthenticated)
+            ApiResponseDto apiResponse = await _httpClient.GetJsonAsync<ApiResponseDto>("api/Tenants/GetUserTenant");
+            if (apiResponse.Result != null)
             {
-                userInfo = await _authorizeApi.GetUserInfo();
-                Tenant.Id = TenantAuthorization.ExtractTenantId(userInfo.ExposedClaims.Find(c => c.Key == TenantAuthorization.TenantClaimType).Value);
+                Tenant = JsonConvert.DeserializeObject<TenantDto>(apiResponse.Result.ToString());
             }
-
             return Tenant;
         }
     }
