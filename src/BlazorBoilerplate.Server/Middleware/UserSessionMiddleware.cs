@@ -47,6 +47,7 @@ namespace BlazorBoilerplate.Server.Middleware
                     if (userSession.Roles.Contains("Administrator"))
                         userSession.DisableTenantFilter = true;
                 }
+                userSession.DisableTenantFilter = true;
 
                 // Call the next delegate/middleware in the pipeline
                 await _next.Invoke(httpContext);
