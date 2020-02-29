@@ -10,6 +10,6 @@ namespace BlazorBoilerplate.Server.Models
 
         [Required]
         [MaxLength(128)]
-        public string Title { get; set; }
+        public string Title { get; set; }//TODO must be unique
     }
 }

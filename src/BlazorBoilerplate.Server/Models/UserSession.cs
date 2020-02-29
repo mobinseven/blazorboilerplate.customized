@@ -15,7 +15,7 @@ namespace BlazorBoilerplate.Server.Models
         public string LastName { get; set; }
         public List<string> Roles { get; set; }
         public List<KeyValuePair<string, string>> ExposedClaims { get; set; }
-        public bool DisableTenantFilter { get; set; } = false;
+        public bool DisableTenantFilter { get; set; } = true;
 
         public UserSession()
         {

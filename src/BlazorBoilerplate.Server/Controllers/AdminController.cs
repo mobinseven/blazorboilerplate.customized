@@ -33,7 +33,7 @@ namespace BlazorBoilerplate.Server.Controllers
         private readonly ILogger<AccountController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _db;
@@ -44,7 +44,7 @@ namespace BlazorBoilerplate.Server.Controllers
 
         public AdminController(UserManager<ApplicationUser> userManager, ApplicationDbContext db,
             SignInManager<ApplicationUser> signInManager, ILogger<AccountController> logger,
-            RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService, IConfiguration configuration)
+            RoleManager<ApplicationRole> roleManager, IEmailService emailService, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -122,7 +122,7 @@ namespace BlazorBoilerplate.Server.Controllers
         public async Task<ApiResponse> GetRoles([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 0)
         {
             var roleDtoList = new List<RoleDto>();
-            List<IdentityRole<Guid>> listResponse;
+            List<ApplicationRole> listResponse;
 
             // get paginated list of roles
             try
@@ -166,7 +166,7 @@ namespace BlazorBoilerplate.Server.Controllers
         public async Task<ApiResponse> GetRoleAsync(string roleName)
         {
             RoleDto roleDto;
-            IdentityRole<Guid> identityRole;
+            ApplicationRole identityRole;
 
             // get paginated list of users
             try
@@ -212,7 +212,7 @@ namespace BlazorBoilerplate.Server.Controllers
                     return new ApiResponse(400, "Role already exists");
 
                 // Create the role
-                var result = await _roleManager.CreateAsync(new IdentityRole<Guid>(newRole.Name));
+                var result = await _roleManager.CreateAsync(new ApplicationRole(newRole.Name));
 
                 if (!result.Succeeded)
                 {
@@ -221,7 +221,7 @@ namespace BlazorBoilerplate.Server.Controllers
                 }
 
                 // Re-create the permissions
-                IdentityRole<Guid> role = await _roleManager.FindByNameAsync(newRole.Name);
+                ApplicationRole role = await _roleManager.FindByNameAsync(newRole.Name);
 
                 foreach (string claim in newRole.Permissions)
                 {
@@ -254,7 +254,7 @@ namespace BlazorBoilerplate.Server.Controllers
                     return new ApiResponse(400, "This role doesn't exists");
 
                 // Create the permissions
-                IdentityRole<Guid> identityRole = await _roleManager.FindByNameAsync(newRole.Name);
+                ApplicationRole identityRole = await _roleManager.FindByNameAsync(newRole.Name);
 
                 var claims = await _roleManager.GetClaimsAsync(identityRole);
                 var permissions = claims.Where(x => x.Type == ClaimConstants.Permission).Select(x => x.Value).ToList();

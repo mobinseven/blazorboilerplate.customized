@@ -30,7 +30,7 @@ namespace BlazorBoilerplate.Server.Controllers
         private readonly IAccountService _accountService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         private readonly IUserProfileService _userProfileService;
@@ -41,7 +41,7 @@ namespace BlazorBoilerplate.Server.Controllers
             ApplicationDbContext db,
             SignInManager<ApplicationUser> signInManager,
             ILogger<AccountController> logger,
-            RoleManager<IdentityRole<Guid>> roleManager,
+            RoleManager<ApplicationRole> roleManager,
             IEmailService emailService,
             IUserProfileService userProfileService,
             IConfiguration configuration)

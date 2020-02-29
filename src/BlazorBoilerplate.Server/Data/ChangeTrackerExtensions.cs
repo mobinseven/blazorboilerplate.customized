@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
+using System.Linq;
 using System.Security.Claims;
 
 namespace BlazorBoilerplate.Server.Data
@@ -19,7 +20,9 @@ namespace BlazorBoilerplate.Server.Data
             {
                 userId = userSession.UserId;
             }
-
+            if (userSession.TenantId == Guid.Empty)
+            {
+            }
             foreach (var entry in changeTracker.Entries())
             {
                 //Auditable Entity Model
@@ -41,7 +44,7 @@ namespace BlazorBoilerplate.Server.Data
                 //ITenant reads tenantId from userSession
                 if (entry.Entity is ITenant)
                 {
-                    entry.Property("TenantId").CurrentValue = userSession.TenantId;
+                    entry.Property("TenantId").CurrentValue = (userSession.TenantId != Guid.Empty) ? userSession.TenantId : dbContext.Tenants.Where(t => t.Title == "root").FirstOrDefault().Id;
                 }
 
                 //Soft Delete Entity Model

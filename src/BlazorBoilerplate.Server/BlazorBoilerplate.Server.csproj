@@ -49,6 +49,8 @@
     <Compile Remove="Migrations\ApplicationDb\20200228065941_Books.Designer.cs" />
     <Compile Remove="Migrations\ApplicationDb\20200228070919_Books.cs" />
     <Compile Remove="Migrations\ApplicationDb\20200228070919_Books.Designer.cs" />
+    <Compile Remove="Migrations\ApplicationDb\20200229080959_ApplicationRole2.cs" />
+    <Compile Remove="Migrations\ApplicationDb\20200229080959_ApplicationRole2.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
-﻿using BlazorBoilerplate.Server.Data.Interfaces;
+﻿using BlazorBoilerplate.Server.Data;
+using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Middleware.Extensions;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
@@ -26,12 +27,15 @@ namespace BlazorBoilerplate.Server.Middleware
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext httpContext, ILogger<UserSessionMiddleware> logger, IUserSession userSession)
+        public async Task InvokeAsync(HttpContext httpContext, ILogger<UserSessionMiddleware> logger, IUserSession userSession, ApplicationDbContext applicationContext)
         {
             _logger = logger;
             try
             {
                 var request = httpContext.Request;
+
+                Guid rootTenantId = applicationContext.Tenants.Where(t => t.Title == "root").FirstOrDefault().Id;
+                userSession.TenantId = rootTenantId; // If it is does not belong to any specific tenant, it is possessed by root tenant.
 
                 //First setup the userSession, then call next midleware
                 if (httpContext.User.Identity.IsAuthenticated)
@@ -42,14 +46,10 @@ namespace BlazorBoilerplate.Server.Middleware
 
                     Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == TenantAuthorization.TenantClaimType);
                     if (tenantClaim != null)
+                    {
                         userSession.TenantId = TenantAuthorization.ExtractTenantId(tenantClaim.Value);
-
-                    if (userSession.Roles.Contains("Administrator"))
-                        userSession.DisableTenantFilter = true;
-                }
-                else
-                {
-                    userSession.DisableTenantFilter = true;// Anonymouse user can view publicly available ITenant items
+                        userSession.DisableTenantFilter = false;
+                    }
                 }
 
                 // Call the next delegate/middleware in the pipeline
