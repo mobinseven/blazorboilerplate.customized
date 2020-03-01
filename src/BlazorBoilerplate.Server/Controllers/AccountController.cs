@@ -575,9 +575,9 @@ namespace BlazorBoilerplate.Server.Controllers
                         await _userManager.RemoveClaimAsync(appUser, new Claim($"Is{role}", "true")).ConfigureAwait(true);
                     }
                 }
-                catch
+                catch (Exception e)
                 {
-                    return new ApiResponse(500, "Error Updating Roles");
+                    return new ApiResponse(500, $"Error Updating Roles: {e.Message}");
                 }
             }
             return new ApiResponse(200, "User Updated");

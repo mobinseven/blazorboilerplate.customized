@@ -1,4 +1,5 @@
 ﻿using BlazorBoilerplate.Server.Data.Interfaces;
+using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
@@ -41,10 +42,10 @@ namespace BlazorBoilerplate.Server.Data
                     }
                 }
 
-                //ITenant reads tenantId from userSession
+                //ITenant reads tenantId from userSession, else use public tenant.
                 if (entry.Entity is ITenant)
                 {
-                    entry.Property("TenantId").CurrentValue = (userSession.TenantId != Guid.Empty) ? userSession.TenantId : dbContext.Tenants.Where(t => t.Title == "root").FirstOrDefault().Id;
+                    entry.Property("TenantId").CurrentValue = (userSession.TenantId != Guid.Empty) ? userSession.TenantId : dbContext.Tenants.Where(t => t.Title == TenantDefinitions.PublicTenantTitle).FirstOrDefault().Id;
                 }
 
                 //Soft Delete Entity Model

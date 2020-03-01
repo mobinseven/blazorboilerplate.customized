@@ -48,11 +48,12 @@ namespace BlazorBoilerplate.Server.Controllers
         [HttpGet("GetUserTenant")]
         public async Task<ApiResponse> GetUserTenant()
         {
-            Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantAuthorization.TenantClaimType);
+            Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantDefinitions.ClaimType);
             Guid TenantId = Guid.Empty;
+            var user = await _userManager.GetUserAsync(User);
             if (claim != null)
             {
-                TenantId = TenantAuthorization.ExtractTenantId(claim.Value);
+                TenantId = Guid.Parse(claim.Value);
             }
             return await _tenantService.GetTenant(TenantId);
         }
@@ -69,7 +70,7 @@ namespace BlazorBoilerplate.Server.Controllers
             if (ModelState.IsValid)
             {
                 ApiResponse apiResponse = await _tenantService.PostTenant(tenant);
-                await _tenantService.AddTenantManager(User.Identity.Name, ((Tenant)apiResponse.Result).Id);
+                await _tenantService.AddTenantOwner(User.Identity.Name, ((Tenant)apiResponse.Result).Id);
                 return apiResponse;
             }
             else
@@ -84,15 +85,15 @@ namespace BlazorBoilerplate.Server.Controllers
         public async Task<ApiResponse> DeleteTenant(Guid id) => await _tenantService.DeleteTenant(id);
 
         [HttpGet("Users/{tenantId}")]
-        [Authorize(Policy = TenantAuthorization.Policies.Manager)]
+        [Authorize(Policy = TenantDefinitions.Policy)]
         public async Task<ApiResponse> GetTenantUsers(Guid tenantId) => await _tenantService.GetTenantUsers(tenantId);
 
         [HttpDelete("Users/{tenantId}/{userId}")]
-        [Authorize(Policy = TenantAuthorization.Policies.Manager)]
+        [Authorize(Policy = TenantDefinitions.Policy)]
         public async Task<ApiResponse> RemoveTenantUser(Guid tenantId, Guid userId) => await _tenantService.RemoveTenantUser(userId, tenantId);
 
         [HttpPost("Users/{tenantId}/{userName}")]
-        [Authorize(Policy = TenantAuthorization.Policies.Manager)]
+        [Authorize(Policy = TenantDefinitions.Policy)]
         public async Task<ApiResponse> AddTenantUser(Guid tenantId, string userName) => await _tenantService.AddTenantUser(userName, tenantId);
     }
 }

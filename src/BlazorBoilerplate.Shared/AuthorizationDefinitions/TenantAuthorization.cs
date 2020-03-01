@@ -5,35 +5,32 @@ using System.Security.Claims;
 using System.Text;
 
 namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
-{
-    public enum TenantRole//TODO https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/ : Role assignments should be managed by the customer, not by the SaaS provider.
+{//TODO https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/ : Role assignments should be managed by the customer, not by the SaaS provider.
+    public static class TenantDefinitions
     {
-        Manager,
-        User,
-        Any
-    }
+        public const string PublicTenantTitle = "Public";
 
-    public static class TenantAuthorization
-    {
-        public const string TenantClaimType = "Tenant";
+        public const string ClaimType = "TenantId";
 
-        public static class Policies
+        public const string Owner = "TenantOwner";
+
+        public const string Policy = "TenantPolicy";
+
+        public static AuthorizationPolicy TenantPolicy()
         {
-            public const string Manager = "TenantManagerPolicy";
-            public const string User = "TenantUserPoilcy";
-            public const string Everyone = "TenantEveryonePolicy";
+            return new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .RequireClaim(ClaimType)
+                .Build();
         }
 
-        public static Claim GenerateTenantClaim(Guid TenantId, TenantRole roleInTenant) => new Claim(TenantClaimType, roleInTenant + ":" + TenantId.ToString());
-
-        public static string GenerateTenantClaimValue(Guid TenantId, TenantRole roleInTenant) => roleInTenant + ":" + TenantId.ToString();
-
-        public static Guid ExtractTenantId(Claim claim) => new Guid(claim.Value.Substring(claim.Value.IndexOf(':') + 1));
-
-        public static Guid ExtractTenantId(string claimValue) => new Guid(claimValue.Substring(claimValue.IndexOf(':') + 1));
-
-        public static TenantRole ExtractTenantRole(Claim claim) => (TenantRole)Enum.Parse(typeof(TenantRole), claim.Value.Substring(0, claim.Value.IndexOf(':')));
-
-        public static TenantRole ExtractTenantRole(string claimValue) => (TenantRole)Enum.Parse(typeof(TenantRole), claimValue.Substring(0, claimValue.IndexOf(':')));
+        public static AuthorizationPolicy TenantOwnerPolicy()
+        {
+            return new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .RequireClaim(ClaimType)
+                .RequireClaim(Owner)
+                .Build();
+        }
     }
 }

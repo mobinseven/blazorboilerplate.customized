@@ -222,26 +222,12 @@ namespace BlazorBoilerplate.Server
                 options.AddPolicy(Policies.IsUser, Policies.IsUserPolicy());
                 options.AddPolicy(Policies.IsReadOnly, Policies.IsReadOnlyPolicy());
                 options.AddPolicy(Policies.IsMyDomain, Policies.IsMyDomainPolicy());  // valid only on serverside operations
-                // Tenants
-                options.AddPolicy(TenantAuthorization.Policies.Manager,
-                    new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .AddRequirements(new TenantRequirement(TenantRole.Manager))
-                .Build());
-                options.AddPolicy(TenantAuthorization.Policies.User,
-                    new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .AddRequirements(new TenantRequirement(TenantRole.User))
-                .Build());
-                options.AddPolicy(TenantAuthorization.Policies.Everyone,
-                    new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .AddRequirements(new TenantRequirement())
-                .Build());
+
+                options.AddPolicy(TenantDefinitions.Policy, TenantDefinitions.TenantPolicy());
+                options.AddPolicy(TenantDefinitions.Owner, TenantDefinitions.TenantOwnerPolicy());
             });
 
             services.AddTransient<IAuthorizationHandler, DomainRequirementHandler>();
-            services.AddTransient<IAuthorizationHandler, TenantAuthorizationHandler>();
             services.Configure<IdentityOptions>(options =>
             {
                 // Password settings

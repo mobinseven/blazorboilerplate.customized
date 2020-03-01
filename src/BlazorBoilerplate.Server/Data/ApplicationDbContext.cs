@@ -45,6 +45,10 @@ namespace BlazorBoilerplate.Server.Data
                 .WithOne(b => b.ApplicationUser)
                 .HasForeignKey<UserProfile>(b => b.UserId);
 
+            modelBuilder.Entity<Tenant>()
+                .HasIndex(t => t.Title)
+                .IsUnique(true);
+
             modelBuilder.ShadowProperties();
 
             base.OnModelCreating(modelBuilder);

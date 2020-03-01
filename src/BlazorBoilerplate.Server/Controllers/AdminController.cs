@@ -202,7 +202,6 @@ namespace BlazorBoilerplate.Server.Controllers
         #region CRUD : CreateRoleAsync
 
         [HttpPost("Role")]
-        [Authorize(Policy = Policies.IsAdmin)]
         public async Task<ApiResponse> CreateRoleAsync([FromBody] RoleDto newRole)
         {
             try

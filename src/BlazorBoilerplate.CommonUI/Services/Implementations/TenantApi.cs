@@ -14,7 +14,6 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
     public class TenantApi
     {
         public TenantDto Tenant { get; set; } = new TenantDto();
-        public BlazorBoilerplate.Shared.AuthorizationDefinitions.TenantRole TenantRole { get; set; }
         private readonly IAuthorizeApi _authorizeApi;
         private readonly HttpClient _httpClient;
 

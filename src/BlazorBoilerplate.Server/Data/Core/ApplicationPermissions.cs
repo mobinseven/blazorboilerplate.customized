@@ -22,7 +22,6 @@ namespace BlazorBoilerplate.Server.Data.Core
         public const string TenantsPermissionGroupName = "Tenant Permissions";
         public static ApplicationPermission ViewTenants = new ApplicationPermission("View Tenants", "tenants.view", TenantsPermissionGroupName, "Permission to view available tenants");
         public static ApplicationPermission ManageTenants = new ApplicationPermission("Manage Tenants", "tenants.manage", TenantsPermissionGroupName, "Permission to create, delete and modify tenants");
-        public static ApplicationPermission AssignTenants = new ApplicationPermission("Assign Tenants", "tenants.assign", TenantsPermissionGroupName, "Permission to assign tenants to users");
 
         static ApplicationPermissions()
         {
@@ -35,7 +34,6 @@ namespace BlazorBoilerplate.Server.Data.Core
                 AssignRoles,
                 ViewTenants,
                 ManageTenants,
-                AssignTenants,
             };
 
             AllPermissions = allPermissions.AsReadOnly();

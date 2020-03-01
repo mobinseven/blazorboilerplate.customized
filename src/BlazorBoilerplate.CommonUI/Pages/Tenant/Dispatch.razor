@@ -1,11 +1,9 @@
 ﻿@page "/tenant"
 @attribute [Authorize]
 @inject TenantApi tenantApi
-@inject NavigationManager navigationManager
-
 @if (TenantDto != null)
 {
-    <AuthorizeView Policy="@TenantAuthorization.Policies.Everyone">
+    <AuthorizeView Policy="@TenantDefinitions.Policy">
         <Authorized>
             <h3>@TenantDto.Title</h3>
         </Authorized>
@@ -14,22 +12,21 @@
         </NotAuthorized>
     </AuthorizeView>
 
-    <AuthorizeView Policy="@TenantAuthorization.Policies.Manager">
+    <AuthorizeView Policy="@TenantDefinitions.Owner">
         <h1>Hello, @context.User.Identity.Name!</h1>
-        <p>You can only see this content if you're authenticated.</p>
         <p>Only tenant managers can see this.</p>
         <Management></Management>
     </AuthorizeView>
 
-    <AuthorizeView Policy="@TenantAuthorization.Policies.User">
+    <AuthorizeView Policy="@TenantDefinitions.Policy">
         <h1>Hello, @context.User.Identity.Name!</h1>
-        <p>You can only see this content if you're authenticated.</p>
         <p>Only tenant users can see this.</p>
         <BooksPanel></BooksPanel>
     </AuthorizeView>
 
 }
 @code {
+
     TenantDto TenantDto;
     protected override async Task OnInitializedAsync()
     {

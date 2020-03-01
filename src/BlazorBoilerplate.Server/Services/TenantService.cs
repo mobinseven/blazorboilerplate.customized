@@ -28,7 +28,7 @@ namespace BlazorBoilerplate.Server.Services
 
         Task<ApiResponse> GetTenantUsers(Guid TenantId);
 
-        Task<ApiResponse> AddTenantManager(string UserName, Guid TenantId);
+        Task<ApiResponse> AddTenantOwner(string UserName, Guid TenantId);
 
         Task<ApiResponse> AddTenantUser(string UserName, Guid TenantId);
 
@@ -112,7 +112,7 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> GetTenantUsers(Guid TenantId)
         {
-            Claim userClaim = TenantAuthorization.GenerateTenantClaim(TenantId, TenantRole.User);
+            Claim userClaim = new Claim(TenantDefinitions.ClaimType, TenantId.ToString());
             List<UserInfoDto> userDtoList = new List<UserInfoDto>();
             IList<ApplicationUser> listResponse;
             try
@@ -148,11 +148,11 @@ namespace BlazorBoilerplate.Server.Services
             return new ApiResponse(200, "Tenant User list fetched", userDtoList);
         }
 
-        public async Task<ApiResponse> AddTenantManager(string UserName, Guid TenantId)
+        public async Task<ApiResponse> AddTenantOwner(string UserName, Guid TenantId)
         {
             var user = await _userManager.FindByNameAsync(UserName);
-            if (await TryAddTenantClaim(user.Id, TenantId, TenantRole.Manager))
-                return new ApiResponse(200, "User added as tenant Manager");
+            if (await TryAddTenantOwnerClaim(user.Id, TenantId))
+                return new ApiResponse(200, "User added as tenant owner");
             else
                 return new ApiResponse(500, "Can not add user to tenant . Maybe they are in another tenant already.");
         }
@@ -160,7 +160,7 @@ namespace BlazorBoilerplate.Server.Services
         public async Task<ApiResponse> AddTenantUser(string UserName, Guid TenantId)
         {
             var user = await _userManager.FindByNameAsync(UserName);
-            if (await TryAddTenantClaim(user.Id, TenantId, TenantRole.User))
+            if (await TryAddTenantClaim(user.Id, TenantId))
                 return new ApiResponse(200, "User added as tenant user");
             else
                 return new ApiResponse(500, "Can not add user to tenant . Maybe they are in another tenant already.");
@@ -168,7 +168,7 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> RemoveTenantUser(Guid UserId, Guid TenantId)
         {
-            if (await TryRemoveTenantClaim(UserId, TenantId, TenantRole.User))
+            if (await TryRemoveTenantClaim(UserId, TenantId))
                 return new ApiResponse(200, "User removed as tenant user");
             else
                 return new ApiResponse(200, "User is not in this tenant.");
@@ -176,12 +176,12 @@ namespace BlazorBoilerplate.Server.Services
 
         #endregion TenantManagement
 
-        private async Task<bool> TryAddTenantClaim(Guid UserId, Guid TenantId, TenantRole claimType)
+        private async Task<bool> TryAddTenantClaim(Guid UserId, Guid TenantId)
         {
             ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
             IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            Claim claim = TenantAuthorization.GenerateTenantClaim(TenantId, claimType);
-            if (!userClaims.Any(c => c.Type == TenantAuthorization.TenantClaimType))//We only accept tenant claim for each user: Single-level Multitenancy
+            Claim claim = new Claim(TenantDefinitions.ClaimType, TenantId.ToString());
+            if (!userClaims.Any(c => c.Type == TenantDefinitions.ClaimType))//We only accept tenant claim for each user: Single-level Multitenancy
             {
                 await _userManager.AddClaimAsync(appUser, claim);
                 return true;
@@ -189,14 +189,30 @@ namespace BlazorBoilerplate.Server.Services
             return false;
         }
 
-        private async Task<bool> TryRemoveTenantClaim(Guid UserId, Guid TenantId, TenantRole claimType)
+        private async Task<bool> TryAddTenantOwnerClaim(Guid UserId, Guid TenantId)
         {
-            Claim claim = TenantAuthorization.GenerateTenantClaim(TenantId, TenantRole.User);
-            var users = await _userManager.GetUsersForClaimAsync(claim);
-            var user = users.FirstOrDefault(u => u.Id == UserId);
-            if (user != null)
+            ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
+            Claim claim = new Claim(TenantDefinitions.Owner, true.ToString());
+            if (await TryAddTenantClaim(UserId, TenantId))
             {
-                await _userManager.RemoveClaimAsync(user, claim);
+                await _userManager.AddClaimAsync(appUser, claim);
+                return true;
+            }
+            else
+            {
+                await TryRemoveTenantClaim(UserId, TenantId);
+                return false;
+            }
+        }
+
+        private async Task<bool> TryRemoveTenantClaim(Guid UserId, Guid TenantId)
+        {
+            ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
+            IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
+            Claim claim = new Claim(TenantDefinitions.ClaimType, TenantId.ToString());
+            if (userClaims.Any(c => c.Type == TenantDefinitions.ClaimType))
+            {
+                await _userManager.RemoveClaimAsync(appUser, claim);
                 return true;
             }
             return false;

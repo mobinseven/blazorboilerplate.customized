@@ -23,6 +23,10 @@ namespace BlazorBoilerplate.Server.Controllers
         }
 
         // GET: api/Books
+        [HttpGet("GetAllBooks")]
+        public async Task<ApiResponse> GetAllBooks() => new ApiResponse(200, "Books Retrieved", await _context.Books.IgnoreQueryFilters().ToListAsync());
+
+        // GET: api/Books
         [HttpGet]
         public async Task<ApiResponse> GetBooks() => new ApiResponse(200, "Books Retrieved", await _context.Books.ToListAsync());
 

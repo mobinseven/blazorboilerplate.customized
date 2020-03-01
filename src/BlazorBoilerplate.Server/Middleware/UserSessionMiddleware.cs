@@ -34,9 +34,6 @@ namespace BlazorBoilerplate.Server.Middleware
             {
                 var request = httpContext.Request;
 
-                Guid rootTenantId = applicationContext.Tenants.Where(t => t.Title == "root").FirstOrDefault().Id;
-                userSession.TenantId = rootTenantId; // If it is does not belong to any specific tenant, it is possessed by root tenant.
-
                 //First setup the userSession, then call next midleware
                 if (httpContext.User.Identity.IsAuthenticated)
                 {
@@ -44,14 +41,17 @@ namespace BlazorBoilerplate.Server.Middleware
                     userSession.UserName = httpContext.User.Identity.Name;
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
 
-                    Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == TenantAuthorization.TenantClaimType);
-                    if (tenantClaim != null)
+                    Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == TenantDefinitions.ClaimType);
+                    if (tenantClaim != null) // user belongs to a tenant
                     {
-                        userSession.TenantId = TenantAuthorization.ExtractTenantId(tenantClaim.Value);
-                        userSession.DisableTenantFilter = false;
+                        userSession.TenantId = Guid.Parse(tenantClaim.Value);
+                        userSession.DisableTenantFilter = false; // Activate the Tenant Filter
                     }
                 }
-
+                else // Anonymous user
+                {
+                    userSession.TenantId = applicationContext.Tenants.Where(t => t.Title == TenantDefinitions.PublicTenantTitle).FirstOrDefault().Id; // if TenantFilter is disabled use public tenant
+                }
                 // Call the next delegate/middleware in the pipeline
                 await _next.Invoke(httpContext);
             }

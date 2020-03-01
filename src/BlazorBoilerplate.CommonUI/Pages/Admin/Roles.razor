@@ -38,6 +38,7 @@ else
                         {
                         <MatChip Label="@permission"></MatChip>
                         }
+                    /**/
                 </MatChipSet>
             </td>
         </MatTableRow>
@@ -225,9 +226,9 @@ else
         }
 
         // this.StateHasChanged();
-        await OnInitializedAsync();
 
         isUpsertRoleDialogOpen = false;
+        await OnInitializedAsync();
     }
 
     #endregion

@@ -1,5 +1,6 @@
 ﻿using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Server.Models;
+using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using IdentityModel;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
@@ -67,14 +68,13 @@ namespace BlazorBoilerplate.Server.Data
 
         private async Task SeedASPIdentityCoreAsync()
         {
+            if (await _context.Tenants.AnyAsync(t => t.Title == TenantDefinitions.PublicTenantTitle) == false)
+            {
+                _context.Tenants.Add(new Tenant { Title = TenantDefinitions.PublicTenantTitle });
+                _context.SaveChanges();
+            }
             if (!await _context.Users.AnyAsync())
             {
-                if (await _context.Tenants.AnyAsync(t => t.Title == "root") == false)
-                {
-                    _context.Tenants.Add(new Tenant { Title = "root" });
-                    _context.SaveChanges();
-                }
-
                 //Generating inbuilt accounts
                 const string adminRoleName = "Administrator";
                 const string userRoleName = "User";
@@ -83,7 +83,7 @@ namespace BlazorBoilerplate.Server.Data
                 await EnsureRoleAsync(userRoleName, "Default user", new string[] { });
 
                 await CreateUserAsync("admin", "admin123", "Admin", "Blazor", "Administrator", "admin@blazoreboilerplate.com", "+1 (123) 456-7890", new string[] { adminRoleName });
-                await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { userRoleName });
+                var user = await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { userRoleName });
 
                 _logger.LogInformation("Inbuilt account generation completed");
             }
