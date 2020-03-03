@@ -1,41 +1,51 @@
-using Microsoft.AspNetCore.Authorization;
-using System;
+using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 
 namespace BlazorBoilerplate.Server.Data.Core
 {
     public static class ApplicationPermissions
     {
         public static ReadOnlyCollection<ApplicationPermission> AllPermissions;
-
-        public const string UsersPermissionGroupName = "User Permissions";
-        public static ApplicationPermission ViewUsers = new ApplicationPermission("View Users", "users.view", UsersPermissionGroupName, "Permission to view other users account details");
-        public static ApplicationPermission ManageUsers = new ApplicationPermission("Manage Users", "users.manage", UsersPermissionGroupName, "Permission to create, delete and modify other users account details");
-
-        public const string RolesPermissionGroupName = "Role Permissions";
-        public static ApplicationPermission ViewRoles = new ApplicationPermission("View Roles", "roles.view", RolesPermissionGroupName, "Permission to view available roles");
-        public static ApplicationPermission ManageRoles = new ApplicationPermission("Manage Roles", "roles.manage", RolesPermissionGroupName, "Permission to create, delete and modify roles");
-        public static ApplicationPermission AssignRoles = new ApplicationPermission("Assign Roles", "roles.assign", RolesPermissionGroupName, "Permission to assign roles to users");
-
-        public const string TenantsPermissionGroupName = "Tenant Permissions";
-        public static ApplicationPermission ViewTenants = new ApplicationPermission("View Tenants", "tenants.view", TenantsPermissionGroupName, "Permission to view available tenants");
-        public static ApplicationPermission ManageTenants = new ApplicationPermission("Manage Tenants", "tenants.manage", TenantsPermissionGroupName, "Permission to create, delete and modify tenants");
-
+        /// <summary>
+        /// Generates ApplicationPermissions based on Permissions Type by iterating over its nested classes and getting constant strings in each class as Value and Name, DescriptionAttribute of the constant string as Description, the nested class name as GroupName.
+        /// </summary>
         static ApplicationPermissions()
         {
-            List<ApplicationPermission> allPermissions = new List<ApplicationPermission>()
+            List<ApplicationPermission> allPermissions = new List<ApplicationPermission>();
+            IEnumerable<object> permissionClasses = typeof(Permissions).GetNestedTypes(BindingFlags.Static | BindingFlags.Public).Cast<TypeInfo>();
+            foreach (TypeInfo permissionClass in permissionClasses)
             {
-                ViewUsers,
-                ManageUsers,
-                ViewRoles,
-                ManageRoles,
-                AssignRoles,
-                ViewTenants,
-                ManageTenants,
-            };
+                IEnumerable<FieldInfo> permissions = permissionClass.DeclaredFields.Where(f => f.IsLiteral);
+                foreach (FieldInfo permission in permissions)
+                {
+                    ApplicationPermission applicationPermission = new ApplicationPermission
+                    {
+                        Value = permission.GetValue(null).ToString(),
+                        Name = permission.GetValue(null).ToString().Replace('.', ' '),
+                        GroupName = permissionClass.Name
+                    };
+                    DescriptionAttribute[] attributes =
+        (DescriptionAttribute[])permission.GetCustomAttributes(
+        typeof(DescriptionAttribute),
+        false);
 
+                    if (attributes != null &&
+                        attributes.Length > 0)
+                    {
+                        applicationPermission.Description = attributes[0].Description;
+                    }
+                    else
+                    {
+                        applicationPermission.Description = applicationPermission.Name;
+                    }
+
+                    allPermissions.Add(applicationPermission);
+                }
+            }
             AllPermissions = allPermissions.AsReadOnly();
         }
 
@@ -61,7 +71,7 @@ namespace BlazorBoilerplate.Server.Data.Core
 
         public static string[] GetAdministrativePermissionValues()
         {
-            return new string[] { ManageUsers, ManageRoles, AssignRoles };
+            return GetAllPermissionNames();
         }
     }
 

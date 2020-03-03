@@ -118,7 +118,7 @@ namespace BlazorBoilerplate.Server.Controllers
         #region GetRoles
 
         [HttpGet("Roles")]
-        [Authorize]
+        [Authorize(Permissions.Role.Read)]
         public async Task<ApiResponse> GetRoles([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 0)
         {
             var roleDtoList = new List<RoleDto>();
@@ -202,6 +202,7 @@ namespace BlazorBoilerplate.Server.Controllers
         #region CRUD : CreateRoleAsync
 
         [HttpPost("Role")]
+        [Authorize(Permissions.Role.Create)]
         public async Task<ApiResponse> CreateRoleAsync([FromBody] RoleDto newRole)
         {
             try
@@ -243,7 +244,7 @@ namespace BlazorBoilerplate.Server.Controllers
         #region CRUD : UpdateRoleAsync
 
         [HttpPut("Role")]
-        [Authorize(Policy = Policies.IsAdmin)]
+        [Authorize(Permissions.Role.Update)]
         public async Task<ApiResponse> UpdateRoleAsync([FromBody] RoleDto newRole)
         {
             try
@@ -284,7 +285,7 @@ namespace BlazorBoilerplate.Server.Controllers
 
         // DELETE: api/Admin/Role/5
         [HttpDelete("Role/{name}")]
-        [Authorize(Policy = Policies.IsAdmin)]
+        [Authorize(Permissions.Role.Delete)]
         public async Task<ApiResponse> DeleteRoleAsync(string name)
         {
             try

@@ -48,6 +48,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -117,6 +119,9 @@ namespace BlazorBoilerplate.Server
                 options.Events.RaiseFailureEvents = true;
                 options.Events.RaiseSuccessEvents = true;
             })
+
+
+
               .AddConfigurationStore(options =>
               {
                   options.ConfigureDbContext = DbContextOptionsBuilder;
@@ -133,6 +138,7 @@ namespace BlazorBoilerplate.Server
 
             X509Certificate2 cert = null;
 
+
             if (_environment.IsDevelopment())
             {
                 // The AddDeveloperSigningCredential extension creates temporary key material for signing tokens.
@@ -144,13 +150,46 @@ namespace BlazorBoilerplate.Server
             }
             else
             {
-                // Works for IIS, finds cert by the thumbprint in appsettings.json
-                // Make sure Certificate is in the Web Hosting folder && installed to LocalMachine or update settings below
-                var useLocalCertStore = Convert.ToBoolean(Configuration["BlazorBoilerplate:UseLocalCertStore"]);
-                var certificateThumbprint = Configuration["BlazorBoilerplate:CertificateThumbprint"];
-
-                if (useLocalCertStore)
+                // running on azure
+                // please make sure to replace your vault URI and your certificate name in appsettings.json!
+                if (Convert.ToBoolean(Configuration["HostingOnAzure:RunsOnAzure"]) == true)
                 {
+                    // if we use a key vault
+                    if (Convert.ToBoolean(Configuration["HostingOnAzure:AzurekeyVault:UsingKeyVault"]) == true)
+                    {
+
+                        // if managed app identity is used
+                        if (Convert.ToBoolean(Configuration["HostingOnAzure:AzurekeyVault:UseManagedAppIdentity"]) == true)
+                        {
+                            try
+                            {
+                                AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
+
+                                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+
+                                var certificateBundle = keyVaultClient.GetSecretAsync(Configuration["HostingOnAzure:AzureKeyVault:VaultURI"], Configuration["HostingOnAzure:AzurekeyVault:CertificateName"]).GetAwaiter().GetResult();
+                                var certificate = System.Convert.FromBase64String(certificateBundle.Value);
+                                cert = new X509Certificate2(certificate, (string)null, X509KeyStorageFlags.MachineKeySet);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw (ex);
+                            }
+                        }
+
+                        // if app id and app secret are used
+                        if (Convert.ToBoolean(Configuration["HostingOnAzure:AzurekeyVault:UsingKeyVault"]) == false)
+                        {
+                            throw new NotImplementedException();
+                        }
+
+                    }
+                }
+
+                // using local cert store
+                if (Convert.ToBoolean(Configuration["BlazorBoilerplate:UseLocalCertStore"]) == true)
+                {
+                    var certificateThumbprint = Configuration["BlazorBoilerplate:CertificateThumbprint"];
                     using (X509Store store = new X509Store("WebHosting", StoreLocation.LocalMachine))
                     {
                         store.Open(OpenFlags.ReadOnly);
@@ -174,20 +213,16 @@ namespace BlazorBoilerplate.Server
                         store.Close();
                     }
                 }
+
+                // pass the resulting certificate to Identity Server
+                if (cert != null)
+                {
+                    identityServerBuilder.AddSigningCredential(cert);
+                }
                 else
                 {
-                    // Azure deployment, will be used if deployed to Azure - Not tested
-                    //var vaultConfigSection = Configuration.GetSection("Vault");
-                    //var keyVaultService = new KeyVaultCertificateService(vaultConfigSection["Url"], vaultConfigSection["ClientId"], vaultConfigSection["ClientSecret"]);
-                    ////cert = keyVaultService.GetCertificateFromKeyVault(vaultConfigSection["CertificateName"]);
-
-                    /// I was informed that this will work as a temp solution in Azure
-                    cert = new X509Certificate2("AuthSample.pfx", "Admin123",
-                        X509KeyStorageFlags.MachineKeySet |
-                        X509KeyStorageFlags.PersistKeySet |
-                        X509KeyStorageFlags.Exportable);
+                    throw new FileNotFoundException("No certificate for Identity Server could be retrieved.");
                 }
-                identityServerBuilder.AddSigningCredential(cert);
             }
 
             var authBuilder = services.AddAuthentication(options =>
@@ -226,8 +261,10 @@ namespace BlazorBoilerplate.Server
                 options.AddPolicy(TenantDefinitions.Policy, TenantDefinitions.TenantPolicy());
                 options.AddPolicy(TenantDefinitions.Owner, TenantDefinitions.TenantOwnerPolicy());
             });
-
+            services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider>();
             services.AddTransient<IAuthorizationHandler, DomainRequirementHandler>();
+            services.AddTransient<IAuthorizationHandler, PermissionRequirementHandler>();
+
             services.Configure<IdentityOptions>(options =>
             {
                 // Password settings
@@ -275,7 +312,7 @@ namespace BlazorBoilerplate.Server
                     {
                         if (context.Request.Path.StartsWithSegments("/api"))
                         {
-                            context.Response.StatusCode = (int)(HttpStatusCode.Unauthorized);
+                            context.Response.StatusCode = (int)(HttpStatusCode.Forbidden);// https://stackoverflow.com/a/6937030/2906268
                         }
 
                         return Task.CompletedTask;
