@@ -259,7 +259,6 @@ namespace BlazorBoilerplate.Server
                 options.AddPolicy(Policies.IsMyDomain, Policies.IsMyDomainPolicy());  // valid only on serverside operations
 
                 options.AddPolicy(TenantDefinitions.Policy, TenantDefinitions.TenantPolicy());
-                options.AddPolicy(TenantDefinitions.Owner, TenantDefinitions.TenantOwnerPolicy());
             });
             services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider>();
             services.AddTransient<IAuthorizationHandler, DomainRequirementHandler>();

@@ -150,28 +150,40 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> AddTenantOwner(string UserName, Guid TenantId)
         {
-            var user = await _userManager.FindByNameAsync(UserName);
-            if (await TryAddTenantOwner(user.Id, TenantId))
+            ApplicationUser user = await _userManager.FindByNameAsync(UserName);
+            if (await TryAddTenantOwner(user, TenantId))
+            {
                 return new ApiResponse(200, "User added as tenant owner");
+            }
             else
+            {
                 return new ApiResponse(500, "Can not add user to tenant . Maybe they are in another tenant already.");
+            }
         }
 
         public async Task<ApiResponse> AddTenantUser(string UserName, Guid TenantId)
         {
-            var user = await _userManager.FindByNameAsync(UserName);
+            ApplicationUser user = await _userManager.FindByNameAsync(UserName);
             if (await TryAddTenantClaim(user.Id, TenantId))
+            {
                 return new ApiResponse(200, "User added as tenant user");
+            }
             else
+            {
                 return new ApiResponse(500, "Can not add user to tenant . Maybe they are in another tenant already.");
+            }
         }
 
         public async Task<ApiResponse> RemoveTenantUser(Guid UserId, Guid TenantId)
         {
             if (await TryRemoveTenantClaim(UserId, TenantId))
+            {
                 return new ApiResponse(200, "User removed as tenant user");
+            }
             else
+            {
                 return new ApiResponse(200, "User is not in this tenant.");
+            }
         }
 
         #endregion TenantManagement
@@ -202,14 +214,21 @@ namespace BlazorBoilerplate.Server.Services
             return false;
         }
 
-        private async Task<bool> TryAddTenantOwner(Guid UserId, Guid TenantId)
+        private async Task<bool> TryAddTenantOwner(ApplicationUser User, Guid TenantId)
         {
-            ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
-            Claim claim = new Claim(TenantDefinitions.Owner, true.ToString());
-            if (await TryAddTenantClaim(UserId, TenantId))
+            if (await TryAddTenantClaim(User.Id, TenantId))
             {
-                var result = await _userManager.AddToRoleAsync(appUser, TenantDefinitions.Owner);
-                return result.Succeeded;
+                if (await _db.Roles.AnyAsync<ApplicationRole>(r => r.Name == TenantDefinitions.Owner))
+                {
+                    try {
+                    IdentityResult result = await _userManager.AddToRoleAsync(User, TenantDefinitions.Owner); 
+                    return result.Succeeded;}
+                    catch(Exception e)
+                    {
+
+                    }
+                }
+                return false;
             }
             return false;
         }

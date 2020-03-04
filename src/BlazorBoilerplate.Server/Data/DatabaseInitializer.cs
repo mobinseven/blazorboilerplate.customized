@@ -178,7 +178,7 @@ namespace BlazorBoilerplate.Server.Data
             );
             }
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
         private async Task SeedIdentityServerAsync()

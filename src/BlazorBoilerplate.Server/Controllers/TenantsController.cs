@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BlazorBoilerplate.Server.Data;
-using BlazorBoilerplate.Server.Models;
-using Microsoft.AspNetCore.Authorization;
+﻿using BlazorBoilerplate.Server.Data;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
+using BlazorBoilerplate.Server.Models;
 using BlazorBoilerplate.Server.Services;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using BlazorBoilerplate.Shared.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace BlazorBoilerplate.Server.Controllers
 {
@@ -50,7 +47,7 @@ namespace BlazorBoilerplate.Server.Controllers
         {
             Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantDefinitions.ClaimType);
             Guid TenantId = Guid.Empty;
-            var user = await _userManager.GetUserAsync(User);
+            ApplicationUser user = await _userManager.GetUserAsync(User);
             if (claim != null)
             {
                 TenantId = Guid.Parse(claim.Value);
@@ -70,7 +67,11 @@ namespace BlazorBoilerplate.Server.Controllers
             if (ModelState.IsValid)
             {
                 ApiResponse apiResponse = await _tenantService.PostTenant(tenant);
-                await _tenantService.AddTenantOwner(User.Identity.Name, ((Tenant)apiResponse.Result).Id);
+                if (apiResponse.StatusCode == 200)
+                {
+                    await _tenantService.AddTenantOwner(User.Identity.Name, ((Tenant)apiResponse.Result).Id);
+                }
+
                 return apiResponse;
             }
             else

@@ -3,26 +3,32 @@
 @inject HttpClient Http
 @inject IAuthorizeApi AuthorizeApi
 <h3>Create new tenant</h3>
-<EditForm Model="@tenantDto" OnValidSubmit="CreateTenantAsync">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <fieldset>
-        <div class="form-group">
-            <input @bind="@tenantDto.Title" placeholder="Title" />
-        </div>
-    </fieldset>
-    <button type="submit">Create Tenant</button>
-</EditForm>
+@if (!CreationSuccess)
+{
+    <EditForm Model="@tenantDto" OnValidSubmit="CreateTenantAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <fieldset>
+            <div class="form-group">
+                <input @bind="@tenantDto.Title" placeholder="Title" />
+            </div>
+        </fieldset>
+        <button type="submit">Create Tenant</button>
+    </EditForm>
+}
+else
+{
+<h3>Success! We created @tenantDto.Title  for you. Log out and log in again to use your tenant as we need to refresh your claims.</h3>
+}
 @code {
     TenantDto tenantDto = new TenantDto();
+    bool CreationSuccess = false;
     public async Task CreateTenantAsync()
     {
         ApiResponseDto apiResponse = await Http.PostJsonAsync<ApiResponseDto>("api/Tenants", tenantDto);
         if (apiResponse.StatusCode == 200)
         {
-            //navigationManager.NavigateTo("/tenant");
-            await AuthorizeApi.Logout();//force logout because claims must be refreshed.
-            navigationManager.NavigateTo("/account/login");
+            CreationSuccess = true;
         }
         else
         {
