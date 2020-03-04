@@ -23,14 +23,5 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
                 .RequireClaim(ClaimType)
                 .Build();
         }
-
-        public static AuthorizationPolicy TenantOwnerPolicy()
-        {
-            return new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .RequireClaim(ClaimType)
-                .RequireClaim(Owner)
-                .Build();
-        }
     }
 }

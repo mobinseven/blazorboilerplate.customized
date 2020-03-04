@@ -9,7 +9,6 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
         public const string Update = nameof(Update);
         public const string Delete = nameof(Delete);
     }
-
     public static class Permissions
     {
         public static class Todo
@@ -49,6 +48,17 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
         {
             [Description("Read Weather Forecasts")]
             public const string Read = nameof(WeatherForecasts) + "." + nameof(Actions.Read);
+        }
+        public static class Tenant
+        {
+            [Description("Get a list of tenants and their details (users, Owner, etc.)")]
+            public const string Read = nameof(Tenant) + "." + nameof(Actions.Read);
+            [Description("Edit existing tenants")]
+            public const string Update = nameof(Tenant) + "." + nameof(Actions.Update);
+            [Description("Delete any tenant")]
+            public const string Delete = nameof(Tenant) + "." + nameof(Actions.Delete);
+            [Description("Holder considered as a tenant owner.")]
+            public const string Owner = nameof(Tenant) + "." + nameof(Owner);
         }
     }
 }
