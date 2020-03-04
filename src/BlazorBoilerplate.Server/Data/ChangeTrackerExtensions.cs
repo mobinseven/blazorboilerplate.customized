@@ -15,6 +15,7 @@ namespace BlazorBoilerplate.Server.Data
             changeTracker.DetectChanges();
             ApplicationDbContext dbContext = (ApplicationDbContext)changeTracker.Context;
             Guid userId = Guid.Empty;
+            Guid TenantId = Guid.Empty;
             var timestamp = DateTime.UtcNow;
 
             if (userSession.UserId != Guid.Empty)
@@ -23,6 +24,11 @@ namespace BlazorBoilerplate.Server.Data
             }
             if (userSession.TenantId == Guid.Empty)
             {
+                TenantId = dbContext.Tenants.Where(t => t.Title == TenantDefinitions.PublicTenantTitle).FirstOrDefault().Id;
+            }
+            else
+            {
+                TenantId = userSession.TenantId;
             }
             foreach (var entry in changeTracker.Entries())
             {
@@ -45,7 +51,7 @@ namespace BlazorBoilerplate.Server.Data
                 //ITenant reads tenantId from userSession, else use public tenant.
                 if (entry.Entity is ITenant)
                 {
-                    entry.Property("TenantId").CurrentValue = (userSession.TenantId != Guid.Empty) ? userSession.TenantId : dbContext.Tenants.Where(t => t.Title == TenantDefinitions.PublicTenantTitle).FirstOrDefault().Id;
+                    entry.Property("TenantId").CurrentValue = TenantId;
                 }
 
                 //Soft Delete Entity Model

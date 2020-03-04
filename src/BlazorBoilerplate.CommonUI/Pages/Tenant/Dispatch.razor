@@ -5,6 +5,7 @@
 {
     <AuthorizeView Policy="@TenantDefinitions.Policy">
         <Authorized>
+            <h1>Hello, @context.User.Identity.Name!</h1>
             <h3>@TenantDto.Title</h3>
         </Authorized>
         <NotAuthorized>
@@ -12,14 +13,12 @@
         </NotAuthorized>
     </AuthorizeView>
 
-    <AuthorizeView Policy="@TenantDefinitions.Owner">
-        <h1>Hello, @context.User.Identity.Name!</h1>
+    <AuthorizeView Policy="@Permissions.Tenant.Owner">
         <p>Only tenant managers can see this.</p>
         <Management></Management>
     </AuthorizeView>
 
     <AuthorizeView Policy="@TenantDefinitions.Policy">
-        <h1>Hello, @context.User.Identity.Name!</h1>
         <p>Only tenant users can see this.</p>
         <BooksPanel></BooksPanel>
     </AuthorizeView>
