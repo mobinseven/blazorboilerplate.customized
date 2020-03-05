@@ -68,7 +68,7 @@ namespace BlazorBoilerplate.Server.Data
 
         private async Task SeedASPIdentityCoreAsync()
         {
-            if (await _context.Tenants.AnyAsync(t => t.Title == TenantConstants.RootTenantTitle) == false)
+            if (!await _context.Tenants.AnyAsync(t => t.Title == TenantConstants.RootTenantTitle))
             {
                 _context.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
                 await _context.SaveChangesAsync();

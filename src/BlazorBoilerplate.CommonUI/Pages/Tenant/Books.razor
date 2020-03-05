@@ -16,15 +16,17 @@ else
     <MatTableHeader>
         <th>Title</th>
         <th>Author</th>
+        <th>Book Store</th>
     </MatTableHeader>
     <MatTableRow Context="BookRow">
         <td><div style="width:130px;">@BookRow.Title</div></td>
         <td><div style="width:130px;">@BookRow.Author</div></td>
+        <td><div style="width:130px;">@BookRow.BookStoreTitle</div></td>
     </MatTableRow>
 </MatTable>
 }
 @code {
-public class Book
+    public class Book
     {
         public int Id { get; set; }
 
@@ -33,6 +35,8 @@ public class Book
 
         [Required]
         public string Author { get; set; }
+
+        public string BookStoreTitle { get; set; }
     }
     List<Book> books = new List<Book>();
     protected override async Task OnInitializedAsync()
@@ -41,7 +45,7 @@ public class Book
     }
     public async Task RetrieveBooksList()
     {
-        ApiResponseDto apiResponse = await Http.GetJsonAsync<ApiResponseDto>("/api/Books");
+        ApiResponseDto apiResponse = await Http.GetJsonAsync<ApiResponseDto>("/api/Books/GetAllBooks");
         if (apiResponse.StatusCode == 200)
         {
             matToaster.Add(apiResponse.Message, MatToastType.Success, "Books Retrieved");

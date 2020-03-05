@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BlazorBoilerplate.Server.Data;
 using BlazorBoilerplate.Server.Data.Core;
+using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
 using BlazorBoilerplate.Server.Models;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
@@ -18,6 +19,8 @@ namespace BlazorBoilerplate.Server.Services
     public interface ITenantService
     {
         Task<ApiResponse> GetTenants();
+
+        Tenant GetTenant();
 
         Task<ApiResponse> GetTenant(Guid id);
 
@@ -40,13 +43,12 @@ namespace BlazorBoilerplate.Server.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMapper _autoMapper;
-
-        public TenantService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IMapper autoMapper)
+        private readonly IUserSession _userSession;
+        public TenantService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IUserSession userSession)
         {
             _db = db;
             _userManager = userManager;
-            _autoMapper = autoMapper;
+            _userSession = userSession;
         }
 
         #region Tenants
@@ -55,6 +57,25 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> GetTenant(Guid id) => new ApiResponse(200, "Retrieved Tenant", await _db.Tenants.FindAsync(id));
 
+        public Tenant GetTenant()
+        {
+            Guid TenantId = Guid.Empty;
+            //read tenantId from userSession, else use root tenant.
+            if (_userSession.TenantId == Guid.Empty)
+            {
+                if (!_db.Tenants.Any(t => t.Title == TenantConstants.RootTenantTitle))
+                {
+                    _db.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
+                    _db.SaveChanges();
+                }
+                TenantId = _db.Tenants.Where(t => t.Title == TenantConstants.RootTenantTitle).FirstOrDefault().Id;
+            }
+            else
+            {
+                TenantId = _userSession.TenantId;
+            }
+           return _db.Tenants.Find(TenantId);
+        }
         public async Task<ApiResponse> PutTenant(TenantDto tenant)
         {
             Tenant t = _db.Tenants.Find(tenant.Id);
@@ -99,7 +120,7 @@ namespace BlazorBoilerplate.Server.Services
 
             _db.Tenants.Remove(tenant);
             await _db.SaveChangesAsync();
-            return new ApiResponse(200, "Tenant Removed", _autoMapper.Map(tenant, new TenantDto()));
+            return new ApiResponse(200, "Tenant Removed", tenant);
         }
 
         private bool TenantExists(Guid id)

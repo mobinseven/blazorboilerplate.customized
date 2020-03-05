@@ -16,7 +16,6 @@ using System.Threading.Tasks;
 namespace BlazorBoilerplate.Server.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]//TODO Roles of managing tenants
     [ApiController]
     public class TenantsController : ControllerBase
     {
@@ -40,10 +39,10 @@ namespace BlazorBoilerplate.Server.Controllers
 
         // GET: api/Tenants/5
         [HttpGet("{id}")]
-        [Authorize(Policy = Policies.IsAdmin)]
         public async Task<ApiResponse> GetTenant(Guid id) => await _tenantService.GetTenant(id);
 
         [HttpGet("GetUserTenant")]
+        [Authorize]
         public async Task<ApiResponse> GetUserTenant()
         {
             Claim claim = User.Claims.FirstOrDefault(c => c.Type == ClaimConstants.TenantId);
@@ -63,6 +62,7 @@ namespace BlazorBoilerplate.Server.Controllers
 
         // POST: api/Tenants
         [HttpPost]
+        [Authorize]
         public async Task<ApiResponse> PostTenant([FromBody] TenantDto tenant)
         {
             if (ModelState.IsValid)

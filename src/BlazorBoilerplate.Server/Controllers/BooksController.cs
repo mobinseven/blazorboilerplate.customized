@@ -1,13 +1,12 @@
-﻿using System;
+﻿using BlazorBoilerplate.Server.Data;
+using BlazorBoilerplate.Server.Middleware.Wrappers;
+using BlazorBoilerplate.Server.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BlazorBoilerplate.Server.Data;
-using BlazorBoilerplate.Server.Models;
-using BlazorBoilerplate.Server.Middleware.Wrappers;
 
 namespace BlazorBoilerplate.Server.Controllers
 {
@@ -24,7 +23,17 @@ namespace BlazorBoilerplate.Server.Controllers
 
         // GET: api/Books
         [HttpGet("GetAllBooks")]
-        public async Task<ApiResponse> GetAllBooks() => new ApiResponse(200, "Books Retrieved", await _context.Books.IgnoreQueryFilters().ToListAsync());
+        public async Task<ApiResponse> GetAllBooks()
+        {
+            List<Book> books = await _context.Books.IgnoreQueryFilters().ToListAsync();
+            for (int b = 0; b < books.Count; b++)
+            {
+                Guid BookStoreId = _context.Books.Where(bo => bo.Id == books[b].Id).Select(bo => EF.Property<Guid>(bo, "TenantId")).FirstOrDefault();
+                Tenant BookStore = await _context.Tenants.FindAsync(BookStoreId);
+                books[b].BookStoreTitle = BookStore.Title;
+            }
+            return new ApiResponse(200, "Books Retrieved", books);
+        }
 
         // GET: api/Books
         [HttpGet]
@@ -34,7 +43,7 @@ namespace BlazorBoilerplate.Server.Controllers
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
+            Book book = await _context.Books.FindAsync(id);
 
             if (book == null)
             {
@@ -92,7 +101,7 @@ namespace BlazorBoilerplate.Server.Controllers
         [HttpDelete("{id}")]
         public async Task<ApiResponse> DeleteBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
+            Book book = await _context.Books.FindAsync(id);
             if (book == null)
             {
                 return new ApiResponse(404, "Book not found");

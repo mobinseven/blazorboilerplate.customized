@@ -1,5 +1,7 @@
 ﻿using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Server.Data.Interfaces;
+using BlazorBoilerplate.Server.Models;
+using BlazorBoilerplate.Server.Services;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -22,7 +24,8 @@ namespace BlazorBoilerplate.Server.Data
             {
                 userId = userSession.UserId;
             }
-            foreach (var entry in changeTracker.Entries())
+            var entries = changeTracker.Entries().ToList();
+            foreach (var entry in entries)
             {
                 //Auditable Entity Model
                 if (entry.Entity is IAuditable)
@@ -40,10 +43,10 @@ namespace BlazorBoilerplate.Server.Data
                     }
                 }
 
-                //ITenant reads tenantId from userSession, else use public tenant.
                 if (entry.Entity is ITenant)
                 {
                     Guid TenantId = Guid.Empty;
+                    //read tenantId from userSession, else use root tenant.
                     if (userSession.TenantId == Guid.Empty)
                     {
                         TenantId = dbContext.Tenants.Where(t => t.Title == TenantConstants.RootTenantTitle).FirstOrDefault().Id;
