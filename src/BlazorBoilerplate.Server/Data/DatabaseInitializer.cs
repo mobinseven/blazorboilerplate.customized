@@ -92,19 +92,6 @@ namespace BlazorBoilerplate.Server.Data
 
                 _logger.LogInformation("Inbuilt account generation completed");
             }
-            else
-            {
-                const string adminRoleName = "Administrator";
-
-                ApplicationRole role = await _roleManager.FindByNameAsync(adminRoleName);
-                var AllClaims = ApplicationPermissions.GetAllPermissionValues().Distinct();
-                var RoleClaims = (await _roleManager.GetClaimsAsync(role)).Select(c => c.Value).ToList();
-                var NewClaims = AllClaims.Except(RoleClaims);
-                foreach (string claim in NewClaims)
-                {
-                    await _roleManager.AddClaimAsync(role, new Claim(ClaimConstants.Permission, claim));
-                }
-            }
         }
 
         private async Task SeedBlazorBoilerplateAsync()
@@ -232,6 +219,27 @@ namespace BlazorBoilerplate.Server.Data
                     if (!result.Succeeded)
                     {
                         await _roleManager.DeleteAsync(role);
+                    }
+                }
+            }
+            else if (roleName == RoleConstants.AdminRoleName)// Ensure Admin has all permissions
+            {
+                ApplicationRole adminRole = await _roleManager.FindByNameAsync(roleName);
+                var AllClaims = claims;
+                var RoleClaims = (await _roleManager.GetClaimsAsync(adminRole)).Select(c => c.Value).ToList();
+                var NewClaims = AllClaims.Except(RoleClaims);
+                foreach (string claim in NewClaims)
+                {
+                    await _roleManager.AddClaimAsync(adminRole, new Claim(ClaimConstants.Permission, claim));
+                }
+                // Also we can remove deprecated permissions from all roles in db
+                var DeprecatedClaims = RoleClaims.Except(AllClaims);
+                var roles = await _roleManager.Roles.ToListAsync();
+                foreach (string claim in DeprecatedClaims)
+                {
+                    foreach (var role in roles)
+                    {
+                        await _roleManager.RemoveClaimAsync(role, new Claim(ClaimConstants.Permission, claim));
                     }
                 }
             }
