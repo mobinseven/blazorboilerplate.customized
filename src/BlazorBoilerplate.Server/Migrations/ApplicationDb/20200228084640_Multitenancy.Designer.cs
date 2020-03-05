@@ -4,53 +4,22 @@ using BlazorBoilerplate.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BlazorBoilerplate.Server.Migrations.ApplicationDb
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200228084640_Multitenancy")]
+    partial class Multitenancy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "3.1.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-            modelBuilder.Entity("ApplicationRole", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(256)")
-                        .HasMaxLength(256);
-
-                    b.Property<string>("NormalizedName")
-                        .HasColumnType("nvarchar(256)")
-                        .HasMaxLength(256);
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("AspNetRoles");
-                });
 
             modelBuilder.Entity("BlazorBoilerplate.Server.Models.ApiLogItem", b =>
                 {
@@ -296,6 +265,18 @@ namespace BlazorBoilerplate.Server.Migrations.ApplicationDb
                         .HasColumnType("bigint")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<int>("Count")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsNavMinified")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsNavOpen")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastPageVisited")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("LastUpdatedDate")
                         .HasColumnType("datetime2");
 
@@ -308,6 +289,34 @@ namespace BlazorBoilerplate.Server.Migrations.ApplicationDb
                         .IsUnique();
 
                     b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(256)")
+                        .HasMaxLength(256);
+
+                    b.Property<string>("NormalizedName")
+                        .HasColumnType("nvarchar(256)")
+                        .HasMaxLength(256);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -411,15 +420,6 @@ namespace BlazorBoilerplate.Server.Migrations.ApplicationDb
                     b.ToTable("AspNetUserTokens");
                 });
 
-            modelBuilder.Entity("ApplicationRole", b =>
-                {
-                    b.HasOne("BlazorBoilerplate.Server.Models.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("BlazorBoilerplate.Server.Models.ApiLogItem", b =>
                 {
                     b.HasOne("BlazorBoilerplate.Server.Models.ApplicationUser", null)
@@ -456,7 +456,7 @@ namespace BlazorBoilerplate.Server.Migrations.ApplicationDb
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("ApplicationRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -483,7 +483,7 @@ namespace BlazorBoilerplate.Server.Migrations.ApplicationDb
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("ApplicationRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)

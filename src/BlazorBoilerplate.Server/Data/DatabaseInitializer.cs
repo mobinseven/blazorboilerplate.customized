@@ -1,5 +1,6 @@
 ﻿using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Server.Models;
+using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using IdentityModel;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
@@ -24,7 +25,7 @@ namespace BlazorBoilerplate.Server.Data
         private readonly ConfigurationDbContext _configurationContext;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger _logger;
 
         public DatabaseInitializer(
@@ -33,7 +34,7 @@ namespace BlazorBoilerplate.Server.Data
             ConfigurationDbContext configurationContext,
             ILogger<DatabaseInitializer> logger,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole<Guid>> roleManager)
+            RoleManager<ApplicationRole> roleManager)
         {
             _persistedGrantContext = persistedGrantContext;
             _configurationContext = configurationContext;
@@ -67,17 +68,27 @@ namespace BlazorBoilerplate.Server.Data
 
         private async Task SeedASPIdentityCoreAsync()
         {
+            if (!await _context.Tenants.AnyAsync(t => t.Title == TenantConstants.RootTenantTitle))
+            {
+                _context.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
+                await _context.SaveChangesAsync();
+            }
+            await EnsureRoleAsync(RoleConstants.AdminRoleName, "Default administrator", ApplicationPermissions.GetAllPermissionValues());
+            await EnsureRoleAsync(RoleConstants.UserRoleName, "Default user", new string[] { });
+            await EnsureRoleAsync(RoleConstants.TenantManagerRoleName, "Tenant Manager",
+                new string[] {
+                        Permissions.Tenant.Manager,
+                        Permissions.Role.Create,
+                        Permissions.Role.Read,
+                        Permissions.Role.Update,
+                        Permissions.Role.Delete
+                });
             if (!await _context.Users.AnyAsync())
             {
                 //Generating inbuilt accounts
-                const string adminRoleName = "Administrator";
-                const string userRoleName = "User";
 
-                await EnsureRoleAsync(adminRoleName, "Default administrator", ApplicationPermissions.GetAllPermissionValues());
-                await EnsureRoleAsync(userRoleName, "Default user", new string[] { });
-
-                await CreateUserAsync("admin", "admin123", "Admin", "Blazor", "Administrator", "admin@blazoreboilerplate.com", "+1 (123) 456-7890", new string[] { adminRoleName });
-                await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { userRoleName });
+                await CreateUserAsync("admin", "admin123", "Admin", "Blazor", "Administrator", "admin@blazoreboilerplate.com", "+1 (123) 456-7890", new string[] { RoleConstants.AdminRoleName });
+                var user = await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { RoleConstants.UserRoleName });
 
                 _logger.LogInformation("Inbuilt account generation completed");
             }
@@ -146,7 +157,7 @@ namespace BlazorBoilerplate.Server.Data
             );
             }
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
         private async Task SeedIdentityServerAsync()
@@ -191,11 +202,11 @@ namespace BlazorBoilerplate.Server.Data
                 if (invalidClaims.Any())
                     throw new Exception("The following claim types are invalid: " + string.Join(", ", invalidClaims));
 
-                IdentityRole<Guid> applicationRole = new IdentityRole<Guid>(roleName);
+                ApplicationRole applicationRole = new ApplicationRole(roleName);
 
                 var result = await _roleManager.CreateAsync(applicationRole);
 
-                IdentityRole<Guid> role = await _roleManager.FindByNameAsync(applicationRole.Name);
+                ApplicationRole role = await _roleManager.FindByNameAsync(applicationRole.Name);
 
                 foreach (string claim in claims.Distinct())
                 {
@@ -204,6 +215,27 @@ namespace BlazorBoilerplate.Server.Data
                     if (!result.Succeeded)
                     {
                         await _roleManager.DeleteAsync(role);
+                    }
+                }
+            }
+            else if (roleName == RoleConstants.AdminRoleName)// Ensure Admin has all permissions
+            {
+                ApplicationRole adminRole = await _roleManager.FindByNameAsync(roleName);
+                var AllClaims = claims;
+                var RoleClaims = (await _roleManager.GetClaimsAsync(adminRole)).Select(c => c.Value).ToList();
+                var NewClaims = AllClaims.Except(RoleClaims);
+                foreach (string claim in NewClaims)
+                {
+                    await _roleManager.AddClaimAsync(adminRole, new Claim(ClaimConstants.Permission, claim));
+                }
+                // Also we can remove deprecated permissions from all roles in db
+                var DeprecatedClaims = RoleClaims.Except(AllClaims);
+                var roles = await _roleManager.Roles.ToListAsync();
+                foreach (string claim in DeprecatedClaims)
+                {
+                    foreach (var role in roles)
+                    {
+                        await _roleManager.RemoveClaimAsync(role, new Claim(ClaimConstants.Permission, claim));
                     }
                 }
             }

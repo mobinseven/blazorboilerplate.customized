@@ -1,0 +1,99 @@
+﻿@inject HttpClient Http
+@inject IAuthorizationService AuthorizationService
+@inject AuthenticationStateProvider authStateProvider
+@inject IMatToaster matToaster
+@inject AppState appState
+@inject TenantApi tenantApi
+
+<h3>@tenantDto.Title Management Panel</h3>
+@if (users == null)
+{
+    <LoadingBackground ShowLogoBox="true">
+        <label>Loading Users</label>
+    </LoadingBackground>
+}
+else
+{
+    <MatTable Class="mat-elevation-z5" Items="@users" LoadInitialData="true" Striped="true" RequestApiOnlyOnce="true"
+              DebounceMilliseconds="150">
+        <MatTableHeader>
+            <th>User Name</th>
+            <th>Operations</th>
+        </MatTableHeader>
+        <MatTableRow Context="UserRow">
+            <td><div style="width:130px;">@UserRow.UserName</div></td>
+            <td><div style="width:130px;"><button @onclick=@(e=>RemoveUserAsync(UserRow.UserId))>Delete</button></div></td>
+        </MatTableRow>
+    </MatTable>
+    <EditForm Model="@userInfo">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <fieldset>
+            <div class="form-group">
+                <input @bind="@userInfo.UserName" placeholder="UserName" />
+            </div>
+        </fieldset>
+        <button @onclick=@AddUserAsync>Add User to @tenantDto.Title</button>
+    </EditForm>
+}
+
+@code {
+    ApiResponseDto apiResponse;
+    List<UserInfoDto> users = new List<UserInfoDto>();
+    TenantDto tenantDto = new TenantDto();
+    UserInfoDto userInfo = new UserInfoDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RetrieveUserListAsync();
+    }
+
+    public async Task RetrieveUserListAsync()
+    {
+        tenantDto = tenantApi.Tenant;
+        apiResponse = await Http.GetJsonAsync<ApiResponseDto>($"api/Tenants/Users/{tenantDto.Id}");
+
+        if (apiResponse.StatusCode == 200)
+        {
+            matToaster.Add(apiResponse.Message, MatToastType.Success, "Users Retrieved");
+            users = Newtonsoft.Json.JsonConvert.DeserializeObject<List<UserInfoDto>>(apiResponse.Result.ToString());
+        }
+        else
+        {
+            matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Users Retrieval Failed");
+        }
+    }
+    public async Task AddUserAsync()
+    {
+        try
+        {
+            var apiResponse = await Http.PostJsonAsync<ApiResponseDto>($"api/Tenants/Users/{tenantDto.Id}/{userInfo.UserName}", null);
+            if (apiResponse.StatusCode == 200)
+            {
+                matToaster.Add("User added", MatToastType.Success);
+                await RetrieveUserListAsync();
+            }
+            else
+            {
+                matToaster.Add("Error", MatToastType.Danger, apiResponse.StatusCode.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            matToaster.Add(ex.Message, MatToastType.Danger, "Failed to add user");
+        }
+    }
+    public async Task RemoveUserAsync(Guid userId)
+    {
+        var apiResponse = await Http.DeleteAsync($"api/Tenants/Users/{tenantDto.Id}/{userId}");
+        if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            matToaster.Add("User removed", MatToastType.Success);
+            await RetrieveUserListAsync();
+        }
+        else
+        {
+            matToaster.Add("Error", MatToastType.Danger, apiResponse.StatusCode.ToString());
+        }
+    }
+}

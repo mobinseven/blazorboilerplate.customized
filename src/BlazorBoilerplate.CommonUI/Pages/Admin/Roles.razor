@@ -1,5 +1,5 @@
 @page "/admin/roles"
-@attribute [Authorize]
+@attribute [Authorize(Permissions.Role.Read)]
 @inject HttpClient Http
 @inject IAuthorizationService AuthorizationService
 @inject AuthenticationStateProvider authStateProvider
@@ -16,32 +16,39 @@
 }
 else
 {
-    <p>UnderConstruction</p>
-    @*<MatTable Class="mat-elevation-z5" Items="@roles" LoadInitialData="true" Striped="true" RequestApiOnlyOnce="true" ApiUrl="api/roles"
-                  DebounceMilliseconds="150">
-            <MatTableHeader>
-                <th><MatButton Icon="add" Label="New Role" OnClick="@(() => OpenUpsertRoleDialog())"></MatButton></th>
-                <th>Name</th>
-                <th>Permissions</th>
-            </MatTableHeader>
-            <MatTableRow Context="RoleRow">
-                <td>
-                    <div style="width:155px;">
+    <MatTable Class="mat-elevation-z5" Items="@roles" LoadInitialData="true" Striped="true" RequestApiOnlyOnce="true" ApiUrl="api/roles"
+              DebounceMilliseconds="150">
+        <MatTableHeader>
+            <th>
+                <AuthorizeView Policy="@Permissions.Role.Create">
+                    <MatButton Icon="add" Label="New Role" OnClick="@(() => OpenUpsertRoleDialog())"></MatButton>
+                </AuthorizeView>
+            </th>
+            <th>Name</th>
+            <th>Permissions</th>
+        </MatTableHeader>
+        <MatTableRow Context="RoleRow">
+            <td>
+                <div style="width:155px;">
+                    <AuthorizeView Policy="@Permissions.Role.Update">
                         <MatIconButton Icon="edit" OnClick="@(() => OpenUpsertRoleDialog(@RoleRow.Name))"></MatIconButton>
+                    </AuthorizeView>
+                    <AuthorizeView Policy="@Permissions.Role.Delete">
                         <MatIconButton Icon="delete" OnClick="@(() => OpenDeleteDialog(@RoleRow.Name))"></MatIconButton>
-                    </div>
-                </td>
-                <td><div style="width:130px;">@RoleRow.Name</div></td>
-                <td>
-                    <MatChipSet>
-                        @foreach (var permission in @RoleRow.Permissions)
-                            {
-                            <MatChip Label="@permission"></MatChip>
-                            }
-                    </MatChipSet>
-                </td>
-            </MatTableRow>
-        </MatTable>*@
+                    </AuthorizeView>
+                </div>
+            </td>
+            <td><div style="width:130px;">@RoleRow.Name</div></td>
+            <td>
+                <MatChipSet>
+                    @foreach (var permission in @RoleRow.Permissions)
+                        {
+                        <MatChip Label="@permission"></MatChip>
+                        }
+                </MatChipSet>
+            </td>
+        </MatTableRow>
+    </MatTable>
 }
 
 @*<MatDialog @bind-IsOpen="@isUpsertRoleDialogOpen">
@@ -55,22 +62,22 @@ else
                 </div>
             </fieldset>
 
-            <MatTable Items="@permissionsSelections" Class="mat-elevation-z5" ShowPaging="false">
-                <MatTableHeader>
-                    <th>Permissions</th>
-                    <th>Allow</th>
-                </MatTableHeader>
-                <MatTableRow>
-                    <td>@context.Name</td>
-                    <td><MatCheckbox TValue="bool" @bind-Value="@context.IsSelected"></MatCheckbox></td>
-                </MatTableRow>
-            </MatTable>
-        </MatDialogContent>
-        <MatDialogActions>
-            <MatButton OnClick="@(e => { isUpsertRoleDialogOpen = false; })">Cancel</MatButton>
-            <MatButton OnClick="@UpsertRole">@labelUpsertDialogOkButton</MatButton>
-        </MatDialogActions>
-    </MatDialog>
+        <MatTable Items="@permissionsSelections" Class="mat-elevation-z5" ShowPaging="true">
+            <MatTableHeader>
+                <th>Permissions</th>
+                <th>Allow</th>
+            </MatTableHeader>
+            <MatTableRow>
+                <td>@context.Name</td>
+                <td><MatCheckbox TValue="bool" @bind-Value="@context.IsSelected"></MatCheckbox></td>
+            </MatTableRow>
+        </MatTable>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton OnClick="@(e => { isUpsertRoleDialogOpen = false; })">Cancel</MatButton>
+        <MatButton OnClick="@UpsertRole">@labelUpsertDialogOkButton</MatButton>
+    </MatDialogActions>
+</MatDialog>
 
     <MatDialog @bind-IsOpen="@isDeleteRoleDialogOpen" Style="z-index:100">
         <MatDialogTitle><MatIcon Icon="warning"></MatIcon> Confirm Delete</MatDialogTitle>
@@ -213,11 +220,10 @@ else
                 //matToaster.Add(apiResponse.Message, MatToastType.Danger);
             }
 
-            // this.StateHasChanged();
-            await OnInitializedAsync();
+        // this.StateHasChanged();
 
-            isUpsertRoleDialogOpen = false;
-        }
+        isUpsertRoleDialogOpen = false;
+        await OnInitializedAsync();
     }
 
     #endregion

@@ -1,7 +1,12 @@
-﻿using BlazorBoilerplate.Server.Data.Interfaces;
+﻿using BlazorBoilerplate.Server.Data.Core;
+using BlazorBoilerplate.Server.Data.Interfaces;
+using BlazorBoilerplate.Server.Models;
+using BlazorBoilerplate.Server.Services;
+using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
+using System.Linq;
 using System.Security.Claims;
 
 namespace BlazorBoilerplate.Server.Data
@@ -19,8 +24,8 @@ namespace BlazorBoilerplate.Server.Data
             {
                 userId = userSession.UserId;
             }
-
-            foreach (var entry in changeTracker.Entries())
+            var entries = changeTracker.Entries().ToList();
+            foreach (var entry in entries)
             {
                 //Auditable Entity Model
                 if (entry.Entity is IAuditable)
@@ -29,12 +34,6 @@ namespace BlazorBoilerplate.Server.Data
                     {
                         entry.Property("CreatedOn").CurrentValue = timestamp;
                         entry.Property("CreatedBy").CurrentValue = userId;
-
-                        //Add TenantId to Claims so we can store it in the future
-                        if (entry.Entity is ITenant)
-                        {
-                            entry.Property("TenantId").CurrentValue = userSession.TenantId;
-                        }
                     }
 
                     if (entry.State == EntityState.Deleted || entry.State == EntityState.Modified)
@@ -42,6 +41,21 @@ namespace BlazorBoilerplate.Server.Data
                         entry.Property("ModifiedOn").CurrentValue = timestamp;
                         entry.Property("ModifiedBy").CurrentValue = userId;
                     }
+                }
+
+                if (entry.Entity is ITenant)
+                {
+                    Guid TenantId = Guid.Empty;
+                    //read tenantId from userSession, else use root tenant.
+                    if (userSession.TenantId == Guid.Empty)
+                    {
+                        TenantId = dbContext.Tenants.Where(t => t.Title == TenantConstants.RootTenantTitle).FirstOrDefault().Id;
+                    }
+                    else
+                    {
+                        TenantId = userSession.TenantId;
+                    }
+                    entry.Property("TenantId").CurrentValue = TenantId;
                 }
 
                 //Soft Delete Entity Model

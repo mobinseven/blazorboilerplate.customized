@@ -1,4 +1,6 @@
-﻿using BlazorBoilerplate.Server.Data.Interfaces;
+﻿using BlazorBoilerplate.Server.Data;
+using BlazorBoilerplate.Server.Data.Core;
+using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Middleware.Extensions;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
 using IdentityModel;
@@ -15,33 +17,43 @@ namespace BlazorBoilerplate.Server.Middleware
 {
     public class UserSessionMiddleware
     {
-        ILogger<UserSessionMiddleware> _logger;
+        private ILogger<UserSessionMiddleware> _logger;
 
         //https://trailheadtechnology.com/aspnetcore-multi-tenant-tips-and-tricks/
         private readonly RequestDelegate _next;
+
         public UserSessionMiddleware(RequestDelegate next)
         {
             _next = next;
         }
-        public async Task InvokeAsync(HttpContext httpContext, ILogger<UserSessionMiddleware> logger, IUserSession userSession)
+
+        public async Task InvokeAsync(HttpContext httpContext, ILogger<UserSessionMiddleware> logger, IUserSession userSession, ApplicationDbContext applicationContext)
         {
             _logger = logger;
             try
             {
-                var request = httpContext.Request;
+                HttpRequest request = httpContext.Request;
 
                 //First setup the userSession, then call next midleware
                 if (httpContext.User.Identity.IsAuthenticated)
                 {
                     userSession.UserId = new Guid(httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Subject).First().Value);
                     userSession.UserName = httpContext.User.Identity.Name;
-                    userSession.TenantId = -1; // ClaimsHelper.GetClaim<int>(context.User, "tenantid");
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
-                }
 
+                    Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == ClaimConstants.TenantId);
+                    if (tenantClaim != null) // user belongs to a tenant
+                    {
+                        userSession.TenantId = Guid.Parse(tenantClaim.Value);
+                        userSession.DisableTenantFilter = false; // Activate the Tenant Filter
+                    }
+                    else
+                    {
+                        userSession.TenantId = applicationContext.Tenants.Where(t => t.Title == TenantConstants.RootTenantTitle).FirstOrDefault().Id;
+                    }
+                }
                 // Call the next delegate/middleware in the pipeline
                 await _next.Invoke(httpContext);
-
             }
             catch (Exception ex)
             {
@@ -67,7 +79,7 @@ namespace BlazorBoilerplate.Server.Middleware
 
             if (exception is ApiException)
             {
-                var ex = exception as ApiException;
+                ApiException ex = exception as ApiException;
                 apiError = new ApiError(ResponseMessageEnum.ValidationError.GetDescription(), ex.Errors)
                 {
                     ValidationErrors = ex.Errors,
@@ -76,7 +88,6 @@ namespace BlazorBoilerplate.Server.Middleware
                 };
                 code = ex.StatusCode;
                 httpContext.Response.StatusCode = code;
-
             }
             else if (exception is UnauthorizedAccessException)
             {
@@ -90,7 +101,7 @@ namespace BlazorBoilerplate.Server.Middleware
                 var msg = "An unhandled error occurred.";
                 string stack = null;
 #else
-                var msg = exception.GetBaseException().Message;
+                string msg = exception.GetBaseException().Message;
                 string stack = exception.StackTrace;
 #endif
 

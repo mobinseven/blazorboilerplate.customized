@@ -1,0 +1,38 @@
+﻿@inject IMatToaster matToaster
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject IAuthorizeApi AuthorizeApi
+<h3>Create new tenant</h3>
+@if (!CreationSuccess)
+{
+    <EditForm Model="@tenantDto" OnValidSubmit="CreateTenantAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <fieldset>
+            <div class="form-group">
+                <input @bind="@tenantDto.Title" placeholder="Title" />
+            </div>
+        </fieldset>
+        <button type="submit">Create Tenant</button>
+    </EditForm>
+}
+else
+{
+<h3>Success! We created @tenantDto.Title  for you. Log out and log in again to use your tenant as we need to refresh your claims.</h3>
+}
+@code {
+    TenantDto tenantDto = new TenantDto();
+    bool CreationSuccess = false;
+    public async Task CreateTenantAsync()
+    {
+        ApiResponseDto apiResponse = await Http.PostJsonAsync<ApiResponseDto>("api/Tenants", tenantDto);
+        if (apiResponse.StatusCode == 200)
+        {
+            CreationSuccess = true;
+        }
+        else
+        {
+            matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Tenant Creation Failed");
+        }
+    }
+}

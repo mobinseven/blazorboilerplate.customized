@@ -17,6 +17,7 @@ namespace BlazorBoilerplate.CommonUI
 
         private readonly IUserProfileApi _userProfileApi;
 
+        private readonly IUserProfileApi _userProfileApi;
         public UserProfileDto UserProfile { get; set; }
 
         public AppState(IUserProfileApi userProfileApi)

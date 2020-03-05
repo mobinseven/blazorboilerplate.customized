@@ -13,12 +13,14 @@ using System.Threading.Tasks;
 namespace BlazorBoilerplate.Server.Data
 {
     //https://trailheadtechnology.com/entity-framework-core-2-1-automate-all-that-boring-boiler-plate/
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
     {
         public DbSet<ApiLogItem> ApiLogs { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Todo> Todos { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<Book> Books { get; set; }
 
         private IUserSession _userSession { get; set; }
 
@@ -43,45 +45,37 @@ namespace BlazorBoilerplate.Server.Data
                 .WithOne(b => b.ApplicationUser)
                 .HasForeignKey<UserProfile>(b => b.UserId);
 
+            modelBuilder.Entity<Tenant>()
+                .HasIndex(t => t.Title)
+                .IsUnique(true);
+
             modelBuilder.ShadowProperties();
 
             base.OnModelCreating(modelBuilder);
-            // Customize the ASP.NET Identity model and override the defaults if needed.
-            // For example, you can rename the ASP.NET Identity table names and more.
-            // Add your customizations after calling base.OnModelCreating(builder);
+
             modelBuilder.Entity<Message>().ToTable("Messages");
 
             modelBuilder.ApplyConfiguration(new MessageConfiguration());
 
             SetGlobalQueryFilters(modelBuilder);
-            // Customize the ASP.NET Identity model and override the defaults if needed.
-            // For example, you can rename the ASP.NET Identity table names and more.
-            // Add your customizations after calling base.OnModelCreating(builder);
         }
 
         private void SetGlobalQueryFilters(ModelBuilder modelBuilder)
         {
-            foreach (var tp in modelBuilder.Model.GetEntityTypes())
+            foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableEntityType tp in modelBuilder.Model.GetEntityTypes())
             {
-                var t = tp.ClrType;
+                Type t = tp.ClrType;
 
                 // set global filters
+                if (typeof(ITenant).IsAssignableFrom(t))
+                {
+                    MethodInfo method = SetGlobalQueryForTenantMethodInfo.MakeGenericMethod(t);
+                    method.Invoke(this, new object[] { modelBuilder });
+                }
                 if (typeof(ISoftDelete).IsAssignableFrom(t))
                 {
-                    //TODO future for Tenant
-                    //if (typeof(ITenantEntity).IsAssignableFrom(t))
-                    //{
-                    //    // softdeletable and tenant (note do not filter just ITenant - too much filtering!
-                    //    // just top level classes that have ITenantEntity
-                    //    var method = SetGlobalQueryForSoftDeleteAndTenantMethodInfo.MakeGenericMethod(t);
-                    //    method.Invoke(this, new object[] { modelBuilder });
-                    //}
-                    //else
-                    //{
-                        // softdeletable
-                        var method = SetGlobalQueryForSoftDeleteMethodInfo.MakeGenericMethod(t);
-                        method.Invoke(this, new object[] { modelBuilder });
-                    //}
+                    MethodInfo method = SetGlobalQueryForSoftDeleteMethodInfo.MakeGenericMethod(t);
+                    method.Invoke(this, new object[] { modelBuilder });
                 }
             }
         }
@@ -89,19 +83,17 @@ namespace BlazorBoilerplate.Server.Data
         private static readonly MethodInfo SetGlobalQueryForSoftDeleteMethodInfo = typeof(ApplicationDbContext).GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Single(t => t.IsGenericMethod && t.Name == "SetGlobalQueryForSoftDelete");
 
-        private static readonly MethodInfo SetGlobalQueryForSoftDeleteAndTenantMethodInfo = typeof(ApplicationDbContext).GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .Single(t => t.IsGenericMethod && t.Name == "SetGlobalQueryForSoftDeleteAndTenant");
+        private static readonly MethodInfo SetGlobalQueryForTenantMethodInfo = typeof(ApplicationDbContext).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Single(t => t.IsGenericMethod && t.Name == "SetGlobalQueryForTenant");
 
         public void SetGlobalQueryForSoftDelete<T>(ModelBuilder builder) where T : class, ISoftDelete
         {
             builder.Entity<T>().HasQueryFilter(item => !EF.Property<bool>(item, "IsDeleted"));
         }
 
-        public void SetGlobalQueryForSoftDeleteAndTenant<T>(ModelBuilder builder) where T : class, ISoftDelete, ITenant
+        public void SetGlobalQueryForTenant<T>(ModelBuilder builder) where T : class, ITenant
         {
-            builder.Entity<T>().HasQueryFilter(
-                item => !EF.Property<bool>(item, "IsDeleted") &&
-                        (_userSession.DisableTenantFilter || EF.Property<int>(item, "TenantId") == _userSession.TenantId));
+            builder.Entity<T>().HasQueryFilter(item => (_userSession.DisableTenantFilter || EF.Property<Guid>(item, "TenantId") == _userSession.TenantId));
         }
 
         public override int SaveChanges()
@@ -117,4 +109,3 @@ namespace BlazorBoilerplate.Server.Data
         }
     }
 }
-

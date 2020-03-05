@@ -34,6 +34,7 @@
     [Inject] IHttpContextAccessor _http { get; set; }
 #endif
 
+    [Inject] AppState appState { get; set; }
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
