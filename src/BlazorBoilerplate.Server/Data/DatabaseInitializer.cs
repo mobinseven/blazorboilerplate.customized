@@ -68,31 +68,27 @@ namespace BlazorBoilerplate.Server.Data
 
         private async Task SeedASPIdentityCoreAsync()
         {
-            if (await _context.Tenants.AnyAsync(t => t.Title == TenantDefinitions.PublicTenantTitle) == false)
+            if (await _context.Tenants.AnyAsync(t => t.Title == TenantConstants.RootTenantTitle) == false)
             {
-                _context.Tenants.Add(new Tenant { Title = TenantDefinitions.PublicTenantTitle });
-                _context.SaveChanges();
+                _context.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
+                await _context.SaveChangesAsync();
             }
-            if (!await _context.Users.AnyAsync())
-            {
-                //Generating inbuilt accounts
-                const string adminRoleName = "Administrator";
-                const string userRoleName = "User";
-                const string tenantOwnerRoleName = TenantDefinitions.Owner;
-
-                await EnsureRoleAsync(adminRoleName, "Default administrator", ApplicationPermissions.GetAllPermissionValues());
-                await EnsureRoleAsync(userRoleName, "Default user", new string[] { });
-                await EnsureRoleAsync(tenantOwnerRoleName, "Tenant Owner",
-                    new string[] {
-                        Permissions.Tenant.Owner,
+            await EnsureRoleAsync(RoleConstants.AdminRoleName, "Default administrator", ApplicationPermissions.GetAllPermissionValues());
+            await EnsureRoleAsync(RoleConstants.UserRoleName, "Default user", new string[] { });
+            await EnsureRoleAsync(RoleConstants.TenantManagerRoleName, "Tenant Manager",
+                new string[] {
+                        Permissions.Tenant.Manager,
                         Permissions.Role.Create,
                         Permissions.Role.Read,
                         Permissions.Role.Update,
-                        Permissions.Role.Delete 
-                    });
+                        Permissions.Role.Delete
+                });
+            if (!await _context.Users.AnyAsync())
+            {
+                //Generating inbuilt accounts
 
-                await CreateUserAsync("admin", "admin123", "Admin", "Blazor", "Administrator", "admin@blazoreboilerplate.com", "+1 (123) 456-7890", new string[] { adminRoleName });
-                var user = await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { userRoleName });
+                await CreateUserAsync("admin", "admin123", "Admin", "Blazor", "Administrator", "admin@blazoreboilerplate.com", "+1 (123) 456-7890", new string[] { RoleConstants.AdminRoleName });
+                var user = await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { RoleConstants.UserRoleName });
 
                 _logger.LogInformation("Inbuilt account generation completed");
             }
@@ -102,7 +98,7 @@ namespace BlazorBoilerplate.Server.Data
 
                 ApplicationRole role = await _roleManager.FindByNameAsync(adminRoleName);
                 var AllClaims = ApplicationPermissions.GetAllPermissionValues().Distinct();
-                var RoleClaims = (await _roleManager.GetClaimsAsync(role)).Select(c=>c.Value).ToList();
+                var RoleClaims = (await _roleManager.GetClaimsAsync(role)).Select(c => c.Value).ToList();
                 var NewClaims = AllClaims.Except(RoleClaims);
                 foreach (string claim in NewClaims)
                 {

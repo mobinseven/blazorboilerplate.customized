@@ -1,4 +1,5 @@
 ﻿using BlazorBoilerplate.Server.Data;
+using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
 using BlazorBoilerplate.Server.Models;
 using BlazorBoilerplate.Server.Services;
@@ -45,7 +46,7 @@ namespace BlazorBoilerplate.Server.Controllers
         [HttpGet("GetUserTenant")]
         public async Task<ApiResponse> GetUserTenant()
         {
-            Claim claim = User.Claims.FirstOrDefault(c => c.Type == TenantDefinitions.ClaimType);
+            Claim claim = User.Claims.FirstOrDefault(c => c.Type == ClaimConstants.TenantId);
             Guid TenantId = Guid.Empty;
             ApplicationUser user = await _userManager.GetUserAsync(User);
             if (claim != null)
@@ -86,15 +87,15 @@ namespace BlazorBoilerplate.Server.Controllers
         public async Task<ApiResponse> DeleteTenant(Guid id) => await _tenantService.DeleteTenant(id);
 
         [HttpGet("Users/{tenantId}")]
-        [Authorize(Policy = TenantDefinitions.Policy)]
+        [Authorize(Permissions.Tenant.Manager)]
         public async Task<ApiResponse> GetTenantUsers(Guid tenantId) => await _tenantService.GetTenantUsers(tenantId);
 
         [HttpDelete("Users/{tenantId}/{userId}")]
-        [Authorize(Policy = TenantDefinitions.Policy)]
+        [Authorize(Permissions.Tenant.Manager)]
         public async Task<ApiResponse> RemoveTenantUser(Guid tenantId, Guid userId) => await _tenantService.RemoveTenantUser(userId, tenantId);
 
         [HttpPost("Users/{tenantId}/{userName}")]
-        [Authorize(Policy = TenantDefinitions.Policy)]
+        [Authorize(Permissions.Tenant.Manager)]
         public async Task<ApiResponse> AddTenantUser(Guid tenantId, string userName) => await _tenantService.AddTenantUser(userName, tenantId);
     }
 }

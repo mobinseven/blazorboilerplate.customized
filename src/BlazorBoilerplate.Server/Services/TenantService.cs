@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BlazorBoilerplate.Server.Data;
+using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
 using BlazorBoilerplate.Server.Models;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
@@ -112,7 +113,7 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> GetTenantUsers(Guid TenantId)
         {
-            Claim userClaim = new Claim(TenantDefinitions.ClaimType, TenantId.ToString());
+            Claim userClaim = new Claim(ClaimConstants.TenantId, TenantId.ToString());
             List<UserInfoDto> userDtoList = new List<UserInfoDto>();
             IList<ApplicationUser> listResponse;
             try
@@ -192,8 +193,8 @@ namespace BlazorBoilerplate.Server.Services
         {
             ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
             IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            Claim claim = new Claim(TenantDefinitions.ClaimType, TenantId.ToString());
-            if (!userClaims.Any(c => c.Type == TenantDefinitions.ClaimType))//We only accept one tenant claim for each user: Single-level Multitenancy
+            Claim claim = new Claim(ClaimConstants.TenantId, TenantId.ToString());
+            if (!userClaims.Any(c => c.Type == ClaimConstants.TenantId))//We only accept one tenant claim for each user: Single-level Multitenancy
             {
                 await _userManager.AddClaimAsync(appUser, claim);
                 return true;
@@ -205,8 +206,8 @@ namespace BlazorBoilerplate.Server.Services
         {
             ApplicationUser appUser = await _userManager.FindByIdAsync(UserId.ToString());
             IList<Claim> userClaims = await _userManager.GetClaimsAsync(appUser);
-            Claim claim = new Claim(TenantDefinitions.ClaimType, TenantId.ToString());
-            if (userClaims.Any(c => c.Type == TenantDefinitions.ClaimType))
+            Claim claim = new Claim(ClaimConstants.TenantId, TenantId.ToString());
+            if (userClaims.Any(c => c.Type == ClaimConstants.TenantId))
             {
                 await _userManager.RemoveClaimAsync(appUser, claim);
                 return true;
@@ -218,15 +219,10 @@ namespace BlazorBoilerplate.Server.Services
         {
             if (await TryAddTenantClaim(User.Id, TenantId))
             {
-                if (await _db.Roles.AnyAsync<ApplicationRole>(r => r.Name == TenantDefinitions.Owner))
+                if (await _db.Roles.AnyAsync<ApplicationRole>(r => r.Name == RoleConstants.TenantManagerRoleName))
                 {
-                    try {
-                    IdentityResult result = await _userManager.AddToRoleAsync(User, TenantDefinitions.Owner); 
-                    return result.Succeeded;}
-                    catch(Exception e)
-                    {
-
-                    }
+                    IdentityResult result = await _userManager.AddToRoleAsync(User, RoleConstants.TenantManagerRoleName); 
+                    return result.Succeeded;
                 }
                 return false;
             }

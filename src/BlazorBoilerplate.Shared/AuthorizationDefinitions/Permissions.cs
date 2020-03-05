@@ -58,7 +58,7 @@ namespace BlazorBoilerplate.Shared.AuthorizationDefinitions
             [Description("Delete any tenant")]
             public const string Delete = nameof(Tenant) + "." + nameof(Actions.Delete);
             [Description("Holder considered as a tenant owner.")]
-            public const string Owner = nameof(Tenant) + "." + nameof(Owner);
+            public const string Manager = nameof(Tenant) + "." + nameof(Manager);
         }
     }
 }
