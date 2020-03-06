@@ -15,19 +15,19 @@ else
 {
     <table>
         <thead>
-            <th>User Name</th>
-            <th>Operations</th>
+        <th>User Name</th>
+        <th>Operations</th>
         </thead>
-            <tbody>
-                @foreach (var UserRow in users)
-                {
-                    <tr>
-                        <td><div style="width:130px;">@UserRow.UserName</div></td>
-                        <td><div style="width:130px;"><button @onclick=@(e=>RemoveUserAsync(UserRow.UserId))>Delete</button></div></td>
-                    </tr>
+        <tbody>
+            @foreach (var UserRow in users)
+            {
+                <tr>
+                    <td><div style="width:130px;">@UserRow.UserName</div></td>
+                    <td><div style="width:130px;"><button @onclick=@(e=>RemoveUserAsync(UserRow.UserId))>Delete</button></div></td>
+                </tr>
 
-                }
-            </tbody>
+            }
+        </tbody>
     </table>
     <EditForm Model="@userInfo">
         <DataAnnotationsValidator />
@@ -74,7 +74,7 @@ else
             var apiResponse = await Http.PostJsonAsync<ApiResponseDto>($"api/Tenants/Users/{tenantDto.Id}/{userInfo.UserName}", null);
             if (apiResponse.StatusCode == 200)
             {
-                matToaster.Add("User added", MatToastType.Success);
+                //matToaster.Add("User added", MatToastType.Success);
                 await RetrieveUserListAsync();
             }
             else
