@@ -1,7 +1,6 @@
 ﻿@page "/books"
 @using System.ComponentModel.DataAnnotations
 @inject HttpClient Http
-@inject IMatToaster matToaster
 <h3>Books</h3>
 @if (books == null)
 {
@@ -11,19 +10,23 @@
 }
 else
 {
-<MatTable Class="mat-elevation-z5" Items="@books" LoadInitialData="true" Striped="true" RequestApiOnlyOnce="true"
-          DebounceMilliseconds="150">
-    <MatTableHeader>
+<table>
+    <thead>
         <th>Title</th>
         <th>Author</th>
         <th>Book Store</th>
-    </MatTableHeader>
-    <MatTableRow Context="BookRow">
-        <td><div style="width:130px;">@BookRow.Title</div></td>
-        <td><div style="width:130px;">@BookRow.Author</div></td>
-        <td><div style="width:130px;">@BookRow.BookStoreTitle</div></td>
-    </MatTableRow>
-</MatTable>
+    </thead>
+        <tbody>
+            @foreach (var BookRow in books)
+            {
+                <tr>
+                    <td><div style="width:130px;">@BookRow.Title</div></td>
+                    <td><div style="width:130px;">@BookRow.Author</div></td>
+                    <td><div style="width:130px;">@BookRow.BookStoreTitle</div></td>
+                </tr>
+            }
+        </tbody>
+</table>
 }
 @code {
     public class Book
@@ -48,12 +51,12 @@ else
         ApiResponseDto apiResponse = await Http.GetJsonAsync<ApiResponseDto>("/api/Books/GetAllBooks");
         if (apiResponse.StatusCode == 200)
         {
-            matToaster.Add(apiResponse.Message, MatToastType.Success, "Books Retrieved");
+            //matToaster.Add(apiResponse.Message, MatToastType.Success, "Books Retrieved");
             books = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Book>>(apiResponse.Result.ToString());
         }
         else
         {
-            matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Books Retrieval Failed");
+            //matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Books Retrieval Failed");
         }
     }
 }

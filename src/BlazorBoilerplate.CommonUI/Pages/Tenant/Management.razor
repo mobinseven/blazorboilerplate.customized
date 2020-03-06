@@ -1,7 +1,6 @@
 ﻿@inject HttpClient Http
 @inject IAuthorizationService AuthorizationService
 @inject AuthenticationStateProvider authStateProvider
-@inject IMatToaster matToaster
 @inject AppState appState
 @inject TenantApi tenantApi
 
@@ -14,17 +13,22 @@
 }
 else
 {
-    <MatTable Class="mat-elevation-z5" Items="@users" LoadInitialData="true" Striped="true" RequestApiOnlyOnce="true"
-              DebounceMilliseconds="150">
-        <MatTableHeader>
+    <table>
+        <thead>
             <th>User Name</th>
             <th>Operations</th>
-        </MatTableHeader>
-        <MatTableRow Context="UserRow">
-            <td><div style="width:130px;">@UserRow.UserName</div></td>
-            <td><div style="width:130px;"><button @onclick=@(e=>RemoveUserAsync(UserRow.UserId))>Delete</button></div></td>
-        </MatTableRow>
-    </MatTable>
+        </thead>
+            <tbody>
+                @foreach (var UserRow in users)
+                {
+                    <tr>
+                        <td><div style="width:130px;">@UserRow.UserName</div></td>
+                        <td><div style="width:130px;"><button @onclick=@(e=>RemoveUserAsync(UserRow.UserId))>Delete</button></div></td>
+                    </tr>
+
+                }
+            </tbody>
+    </table>
     <EditForm Model="@userInfo">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -55,12 +59,12 @@ else
 
         if (apiResponse.StatusCode == 200)
         {
-            matToaster.Add(apiResponse.Message, MatToastType.Success, "Users Retrieved");
+            //matToaster.Add(apiResponse.Message, MatToastType.Success, "Users Retrieved");
             users = Newtonsoft.Json.JsonConvert.DeserializeObject<List<UserInfoDto>>(apiResponse.Result.ToString());
         }
         else
         {
-            matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Users Retrieval Failed");
+            //matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Users Retrieval Failed");
         }
     }
     public async Task AddUserAsync()
@@ -75,12 +79,12 @@ else
             }
             else
             {
-                matToaster.Add("Error", MatToastType.Danger, apiResponse.StatusCode.ToString());
+                //matToaster.Add("Error", MatToastType.Danger, apiResponse.StatusCode.ToString());
             }
         }
         catch (Exception ex)
         {
-            matToaster.Add(ex.Message, MatToastType.Danger, "Failed to add user");
+            //matToaster.Add(ex.Message, MatToastType.Danger, "Failed to add user");
         }
     }
     public async Task RemoveUserAsync(Guid userId)
@@ -88,12 +92,12 @@ else
         var apiResponse = await Http.DeleteAsync($"api/Tenants/Users/{tenantDto.Id}/{userId}");
         if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
-            matToaster.Add("User removed", MatToastType.Success);
+            //matToaster.Add("User removed", MatToastType.Success);
             await RetrieveUserListAsync();
         }
         else
         {
-            matToaster.Add("Error", MatToastType.Danger, apiResponse.StatusCode.ToString());
+            //matToaster.Add("Error", MatToastType.Danger, apiResponse.StatusCode.ToString());
         }
     }
 }

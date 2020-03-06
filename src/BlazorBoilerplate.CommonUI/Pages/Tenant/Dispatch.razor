@@ -12,20 +12,14 @@
             <Create></Create>
         </NotAuthorized>
     </AuthorizeView>
-    <MatTabGroup>
         <AuthorizeView Policy="@Permissions.Tenant.Manager">
-            <MatTab Label="Management">
                 <p>Only tenant managers can see this.</p>
                 <Management></Management>
-            </MatTab>
         </AuthorizeView>
         <AuthorizeView Policy="@Policies.IsInTenant">
-            <MatTab Label="Books Panel">
                 <p>Only tenant users can see this.</p>
                 <BooksPanel></BooksPanel>
-            </MatTab>
         </AuthorizeView>
-    </MatTabGroup>
 }
 @code {
 

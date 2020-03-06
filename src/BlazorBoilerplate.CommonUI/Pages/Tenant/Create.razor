@@ -1,5 +1,4 @@
-﻿@inject IMatToaster matToaster
-@inject NavigationManager navigationManager
+﻿@inject NavigationManager navigationManager
 @inject HttpClient Http
 @inject IAuthorizeApi AuthorizeApi
 <h3>Create new tenant</h3>
@@ -32,7 +31,7 @@ else
         }
         else
         {
-            matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Tenant Creation Failed");
+            //matToaster.Add(apiResponse.Message + " : " + apiResponse.StatusCode, MatToastType.Danger, "Tenant Creation Failed");
         }
     }
 }
