@@ -1,4 +1,5 @@
 ﻿using BlazorBoilerplate.Server.Data.Core;
+using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Models;
 using BlazorBoilerplate.Shared.AuthorizationDefinitions;
 using IdentityModel;
@@ -27,6 +28,7 @@ namespace BlazorBoilerplate.Server.Data
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger _logger;
+        private readonly IUserSession _userSession;
 
         public DatabaseInitializer(
             ApplicationDbContext context,
@@ -34,7 +36,8 @@ namespace BlazorBoilerplate.Server.Data
             ConfigurationDbContext configurationContext,
             ILogger<DatabaseInitializer> logger,
             UserManager<ApplicationUser> userManager,
-            RoleManager<ApplicationRole> roleManager)
+            RoleManager<ApplicationRole> roleManager,
+            IUserSession userSession)
         {
             _persistedGrantContext = persistedGrantContext;
             _configurationContext = configurationContext;
@@ -42,6 +45,7 @@ namespace BlazorBoilerplate.Server.Data
             _userManager = userManager;
             _roleManager = roleManager;
             _logger = logger;
+            _userSession = userSession;
         }
 
         public virtual async Task SeedAsync()
@@ -73,6 +77,8 @@ namespace BlazorBoilerplate.Server.Data
                 _context.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
                 await _context.SaveChangesAsync();
             }
+            _userSession.TenantId = (await _context.Tenants.FirstOrDefaultAsync(t => t.Title == TenantConstants.RootTenantTitle)).Id;
+
             await EnsureRoleAsync(RoleConstants.AdminRoleName, "Default administrator", ApplicationPermissions.GetAllPermissionValues());
             await EnsureRoleAsync(RoleConstants.UserRoleName, "Default user", new string[] { });
             await EnsureRoleAsync(RoleConstants.TenantManagerRoleName, "Tenant Manager",

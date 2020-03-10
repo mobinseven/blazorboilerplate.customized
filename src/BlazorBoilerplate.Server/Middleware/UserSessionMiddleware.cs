@@ -5,6 +5,7 @@ using BlazorBoilerplate.Server.Middleware.Extensions;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
 using IdentityModel;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -42,14 +43,13 @@ namespace BlazorBoilerplate.Server.Middleware
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
 
                     Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == ClaimConstants.TenantId);
-                    if (tenantClaim != null) // user belongs to a tenant
+                    if (tenantClaim != null && Guid.Parse(tenantClaim.Value) != Guid.Empty) // user belongs to a tenant
                     {
                         userSession.TenantId = Guid.Parse(tenantClaim.Value);
-                        userSession.DisableTenantFilter = false; // Activate the Tenant Filter
                     }
-                    else
+                    else // ueser does not have a TenantId claim, so use the Root tenant
                     {
-                        userSession.TenantId = applicationContext.Tenants.Where(t => t.Title == TenantConstants.RootTenantTitle).FirstOrDefault().Id;
+                        userSession.TenantId = (await applicationContext.Tenants.FirstOrDefaultAsync(t => t.Title == TenantConstants.RootTenantTitle)).Id;
                     }
                 }
                 // Call the next delegate/middleware in the pipeline

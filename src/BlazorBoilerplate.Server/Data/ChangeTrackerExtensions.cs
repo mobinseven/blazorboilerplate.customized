@@ -45,17 +45,7 @@ namespace BlazorBoilerplate.Server.Data
 
                 if (entry.Entity is ITenant)
                 {
-                    Guid TenantId = Guid.Empty;
-                    //read tenantId from userSession, else use root tenant.
-                    if (userSession.TenantId == Guid.Empty)
-                    {
-                        TenantId = dbContext.Tenants.Where(t => t.Title == TenantConstants.RootTenantTitle).FirstOrDefault().Id;
-                    }
-                    else
-                    {
-                        TenantId = userSession.TenantId;
-                    }
-                    entry.Property("TenantId").CurrentValue = TenantId;
+                    entry.Property("TenantId").CurrentValue = userSession.TenantId;
                 }
 
                 //Soft Delete Entity Model
