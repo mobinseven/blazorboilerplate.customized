@@ -460,8 +460,8 @@ namespace BlazorBoilerplate.Server
             app.UseMiddleware<UserSessionMiddleware>();
 
             // NSwag
-            //app.UseOpenApi();
-            //app.UseSwaggerUi3();
+            app.UseOpenApi();
+            app.UseSwaggerUi3();
 
             app.UseEndpoints(endpoints =>
             {
