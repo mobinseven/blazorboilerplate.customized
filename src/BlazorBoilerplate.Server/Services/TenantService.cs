@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using BlazorBoilerplate.Server.Data;
+﻿using BlazorBoilerplate.Server.Data;
 using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
@@ -60,25 +59,7 @@ namespace BlazorBoilerplate.Server.Services
 
         public async Task<ApiResponse> GetTenant(Guid id) => new ApiResponse(200, "Retrieved Tenant", await _db.Tenants.FindAsync(id));
 
-        public Tenant GetTenant()
-        {
-            Guid TenantId = Guid.Empty;
-            //read tenantId from userSession, else use root tenant.
-            if (_userSession.TenantId == Guid.Empty)
-            {
-                if (!_db.Tenants.Any(t => t.Title == TenantConstants.RootTenantTitle))
-                {
-                    _db.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
-                    _db.SaveChanges();
-                }
-                TenantId = _db.Tenants.Where(t => t.Title == TenantConstants.RootTenantTitle).FirstOrDefault().Id;
-            }
-            else
-            {
-                TenantId = _userSession.TenantId;
-            }
-            return _db.Tenants.Find(TenantId);
-        }
+        public Tenant GetTenant() => _db.Tenants.Find(_db.TenantId);
 
         public async Task<ApiResponse> PutTenant(TenantDto tenant)
         {
@@ -242,7 +223,6 @@ namespace BlazorBoilerplate.Server.Services
 
         private async Task<bool> TryAddTenantOwner(ApplicationUser User, Guid TenantId)
         {
-            _userSession.TenantId = TenantId; // Set tenantId so the new manager role will only belong to the creator's tenant.
             await EnsureRoleAsync(RoleConstants.TenantManagerRoleName, "Tenant Manager",
                 new string[] {
                         Permissions.Tenant.Manager,
@@ -268,15 +248,19 @@ namespace BlazorBoilerplate.Server.Services
             if ((await _roleManager.FindByNameAsync(roleName)) == null)
             {
                 if (claims == null)
+                {
                     claims = new string[] { };
+                }
 
                 string[] invalidClaims = claims.Where(c => ApplicationPermissions.GetPermissionByValue(c) == null).ToArray();
                 if (invalidClaims.Any())
+                {
                     throw new Exception("The following claim types are invalid: " + string.Join(", ", invalidClaims));
+                }
 
                 ApplicationRole applicationRole = new ApplicationRole(roleName);
 
-                var result = await _roleManager.CreateAsync(applicationRole);
+                IdentityResult result = await _roleManager.CreateAsync(applicationRole);
 
                 ApplicationRole role = await _roleManager.FindByNameAsync(applicationRole.Name);
 
@@ -293,19 +277,19 @@ namespace BlazorBoilerplate.Server.Services
             else if (roleName == RoleConstants.AdminRoleName)// Ensure Admin has all permissions
             {
                 ApplicationRole adminRole = await _roleManager.FindByNameAsync(roleName);
-                var AllClaims = claims;
-                var RoleClaims = (await _roleManager.GetClaimsAsync(adminRole)).Select(c => c.Value).ToList();
-                var NewClaims = AllClaims.Except(RoleClaims);
+                string[] AllClaims = claims;
+                List<string> RoleClaims = (await _roleManager.GetClaimsAsync(adminRole)).Select(c => c.Value).ToList();
+                IEnumerable<string> NewClaims = AllClaims.Except(RoleClaims);
                 foreach (string claim in NewClaims)
                 {
                     await _roleManager.AddClaimAsync(adminRole, new Claim(ClaimConstants.Permission, claim));
                 }
                 // Also we can remove deprecated permissions from all roles in db
-                var DeprecatedClaims = RoleClaims.Except(AllClaims);
-                var roles = await _roleManager.Roles.ToListAsync();
+                IEnumerable<string> DeprecatedClaims = RoleClaims.Except(AllClaims);
+                List<ApplicationRole> roles = await _roleManager.Roles.ToListAsync();
                 foreach (string claim in DeprecatedClaims)
                 {
-                    foreach (var role in roles)
+                    foreach (ApplicationRole role in roles)
                     {
                         await _roleManager.RemoveClaimAsync(role, new Claim(ClaimConstants.Permission, claim));
                     }

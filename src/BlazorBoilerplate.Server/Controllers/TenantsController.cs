@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -70,6 +71,13 @@ namespace BlazorBoilerplate.Server.Controllers
                 ApiResponse apiResponse = await _tenantService.PostTenant(tenant);
                 if (apiResponse.StatusCode == 200)
                 {
+                    List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimConstants.TenantId, ((Tenant)apiResponse.Result).Id.ToString())
+            };
+                    ClaimsIdentity appIdentity = new ClaimsIdentity(claims);
+                    User.AddIdentity(appIdentity);
+
                     await _tenantService.AddTenantOwner(User.Identity.Name, ((Tenant)apiResponse.Result).Id);
                 }
 

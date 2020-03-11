@@ -41,16 +41,6 @@ namespace BlazorBoilerplate.Server.Middleware
                     userSession.UserId = new Guid(httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Subject).First().Value);
                     userSession.UserName = httpContext.User.Identity.Name;
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
-
-                    Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == ClaimConstants.TenantId);
-                    if (tenantClaim != null) // user belongs to a tenant
-                    {
-                        userSession.TenantId = Guid.Parse(tenantClaim.Value);
-                    }
-                    else // ueser does not have a TenantId claim, so use the Root tenant
-                    {
-                        userSession.TenantId = (await applicationContext.Tenants.FirstOrDefaultAsync(t => t.Title == TenantConstants.RootTenantTitle)).Id;
-                    }
                 }
                 // Call the next delegate/middleware in the pipeline
                 await _next.Invoke(httpContext);

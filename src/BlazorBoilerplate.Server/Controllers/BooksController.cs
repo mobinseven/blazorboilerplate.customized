@@ -28,7 +28,7 @@ namespace BlazorBoilerplate.Server.Controllers
             List<Book> books = await _context.Books.IgnoreQueryFilters().ToListAsync();
             for (int b = 0; b < books.Count; b++)
             {
-                Guid BookStoreId = _context.Books.Where(bo => bo.Id == books[b].Id).Select(bo => EF.Property<Guid>(bo, "TenantId")).FirstOrDefault();
+                Guid BookStoreId = _context.Books.IgnoreQueryFilters().Where(bo => bo.Id == books[b].Id).Select(bo => EF.Property<Guid>(bo, "TenantId")).FirstOrDefault();
                 Tenant BookStore = await _context.Tenants.FindAsync(BookStoreId);
                 books[b].BookStoreTitle = BookStore.Title;
             }

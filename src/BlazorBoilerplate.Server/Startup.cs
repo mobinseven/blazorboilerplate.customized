@@ -255,6 +255,7 @@ namespace BlazorBoilerplate.Server
 
                 options.AddPolicy(Policies.IsInTenant, Policies.IsInTenantPolicy());
             });
+            services.AddSingleton<ITenantProvider, TenantProvider>();
             services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider>();
             services.AddTransient<IAuthorizationHandler, DomainRequirementHandler>();
             services.AddTransient<IAuthorizationHandler, PermissionRequirementHandler>();
