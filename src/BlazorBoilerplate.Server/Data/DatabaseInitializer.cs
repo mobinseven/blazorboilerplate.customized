@@ -81,14 +81,6 @@ namespace BlazorBoilerplate.Server.Data
 
             await EnsureRoleAsync(RoleConstants.AdminRoleName, "Default administrator", ApplicationPermissions.GetAllPermissionValues());
             await EnsureRoleAsync(RoleConstants.UserRoleName, "Default user", new string[] { });
-            await EnsureRoleAsync(RoleConstants.TenantManagerRoleName, "Tenant Manager",
-                new string[] {
-                        Permissions.Tenant.Manager,
-                        Permissions.Role.Create,
-                        Permissions.Role.Read,
-                        Permissions.Role.Update,
-                        Permissions.Role.Delete
-                });
             if (!await _context.Users.AnyAsync())
             {
                 //Generating inbuilt accounts

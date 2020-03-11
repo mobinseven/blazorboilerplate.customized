@@ -43,7 +43,7 @@ namespace BlazorBoilerplate.Server.Middleware
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
 
                     Claim tenantClaim = httpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == ClaimConstants.TenantId);
-                    if (tenantClaim != null && Guid.Parse(tenantClaim.Value) != Guid.Empty) // user belongs to a tenant
+                    if (tenantClaim != null) // user belongs to a tenant
                     {
                         userSession.TenantId = Guid.Parse(tenantClaim.Value);
                     }

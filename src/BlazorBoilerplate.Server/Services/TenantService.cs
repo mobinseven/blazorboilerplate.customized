@@ -43,11 +43,14 @@ namespace BlazorBoilerplate.Server.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IUserSession _userSession;
-        public TenantService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IUserSession userSession)
+
+        public TenantService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IUserSession userSession)
         {
             _db = db;
             _userManager = userManager;
+            _roleManager = roleManager;
             _userSession = userSession;
         }
 
@@ -74,8 +77,9 @@ namespace BlazorBoilerplate.Server.Services
             {
                 TenantId = _userSession.TenantId;
             }
-           return _db.Tenants.Find(TenantId);
+            return _db.Tenants.Find(TenantId);
         }
+
         public async Task<ApiResponse> PutTenant(TenantDto tenant)
         {
             Tenant t = _db.Tenants.Find(tenant.Id);
@@ -238,16 +242,75 @@ namespace BlazorBoilerplate.Server.Services
 
         private async Task<bool> TryAddTenantOwner(ApplicationUser User, Guid TenantId)
         {
+            _userSession.TenantId = TenantId; // Set tenantId so the new manager role will only belong to the creator's tenant.
+            await EnsureRoleAsync(RoleConstants.TenantManagerRoleName, "Tenant Manager",
+                new string[] {
+                        Permissions.Tenant.Manager,
+                        Permissions.Role.Create,
+                        Permissions.Role.Read,
+                        Permissions.Role.Update,
+                        Permissions.Role.Delete
+                });
             if (await TryAddTenantClaim(User.Id, TenantId))
             {
                 if (await _db.Roles.AnyAsync<ApplicationRole>(r => r.Name == RoleConstants.TenantManagerRoleName))
                 {
-                    IdentityResult result = await _userManager.AddToRoleAsync(User, RoleConstants.TenantManagerRoleName); 
+                    IdentityResult result = await _userManager.AddToRoleAsync(User, RoleConstants.TenantManagerRoleName);
                     return result.Succeeded;
                 }
                 return false;
             }
             return false;
+        }
+
+        private async Task EnsureRoleAsync(string roleName, string description, string[] claims)
+        {
+            if ((await _roleManager.FindByNameAsync(roleName)) == null)
+            {
+                if (claims == null)
+                    claims = new string[] { };
+
+                string[] invalidClaims = claims.Where(c => ApplicationPermissions.GetPermissionByValue(c) == null).ToArray();
+                if (invalidClaims.Any())
+                    throw new Exception("The following claim types are invalid: " + string.Join(", ", invalidClaims));
+
+                ApplicationRole applicationRole = new ApplicationRole(roleName);
+
+                var result = await _roleManager.CreateAsync(applicationRole);
+
+                ApplicationRole role = await _roleManager.FindByNameAsync(applicationRole.Name);
+
+                foreach (string claim in claims.Distinct())
+                {
+                    result = await _roleManager.AddClaimAsync(role, new Claim(ClaimConstants.Permission, ApplicationPermissions.GetPermissionByValue(claim)));
+
+                    if (!result.Succeeded)
+                    {
+                        await _roleManager.DeleteAsync(role);
+                    }
+                }
+            }
+            else if (roleName == RoleConstants.AdminRoleName)// Ensure Admin has all permissions
+            {
+                ApplicationRole adminRole = await _roleManager.FindByNameAsync(roleName);
+                var AllClaims = claims;
+                var RoleClaims = (await _roleManager.GetClaimsAsync(adminRole)).Select(c => c.Value).ToList();
+                var NewClaims = AllClaims.Except(RoleClaims);
+                foreach (string claim in NewClaims)
+                {
+                    await _roleManager.AddClaimAsync(adminRole, new Claim(ClaimConstants.Permission, claim));
+                }
+                // Also we can remove deprecated permissions from all roles in db
+                var DeprecatedClaims = RoleClaims.Except(AllClaims);
+                var roles = await _roleManager.Roles.ToListAsync();
+                foreach (string claim in DeprecatedClaims)
+                {
+                    foreach (var role in roles)
+                    {
+                        await _roleManager.RemoveClaimAsync(role, new Claim(ClaimConstants.Permission, claim));
+                    }
+                }
+            }
         }
     }
 }
