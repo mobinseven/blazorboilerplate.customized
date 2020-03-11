@@ -118,8 +118,6 @@ namespace BlazorBoilerplate.Server
                 options.Events.RaiseSuccessEvents = true;
             })
 
-
-
               .AddConfigurationStore(options =>
               {
                   options.ConfigureDbContext = DbContextOptionsBuilder;
@@ -135,7 +133,6 @@ namespace BlazorBoilerplate.Server
               .AddAspNetIdentity<ApplicationUser>();
 
             X509Certificate2 cert = null;
-
 
             if (_environment.IsDevelopment())
             {
@@ -155,7 +152,6 @@ namespace BlazorBoilerplate.Server
                     // if we use a key vault
                     if (Convert.ToBoolean(Configuration["HostingOnAzure:AzurekeyVault:UsingKeyVault"]) == true)
                     {
-
                         // if managed app identity is used
                         if (Convert.ToBoolean(Configuration["HostingOnAzure:AzurekeyVault:UseManagedAppIdentity"]) == true)
                         {
@@ -180,7 +176,6 @@ namespace BlazorBoilerplate.Server
                         {
                             throw new NotImplementedException();
                         }
-
                     }
                 }
 
@@ -258,6 +253,7 @@ namespace BlazorBoilerplate.Server
 
                 options.AddPolicy(Policies.IsInTenant, Policies.IsInTenantPolicy());
             });
+            services.AddSingleton<ITenantProvider, TenantProvider>();
             services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider>();
             services.AddTransient<IAuthorizationHandler, DomainRequirementHandler>();
             services.AddTransient<IAuthorizationHandler, PermissionRequirementHandler>();

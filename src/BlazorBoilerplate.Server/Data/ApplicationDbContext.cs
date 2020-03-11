@@ -1,7 +1,8 @@
 ﻿using BlazorBoilerplate.Server.Data.Configurations;
+using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Models;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -22,13 +23,31 @@ namespace BlazorBoilerplate.Server.Data
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<Book> Books { get; set; }
 
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private IUserSession _userSession { get; set; }
+
+        internal Guid TenantId
+        {
+            get
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    System.Security.Claims.Claim tenantClaim = _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(predicate: c => c.Type == Core.ClaimConstants.TenantId);
+                    if (tenantClaim != null) // user belongs to a tenant
+                    {
+                        return Guid.Parse(tenantClaim.Value);
+                    }
+                }
+                return (Tenants.FirstOrDefault(t => t.Title == TenantConstants.RootTenantTitle)).Id;
+            }
+        }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         { }
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IUserSession userSession) : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor httpContextAccessor, IUserSession userSession) : base(options)
         {
+            _httpContextAccessor = httpContextAccessor;
             _userSession = userSession;
         }
 
@@ -93,7 +112,8 @@ namespace BlazorBoilerplate.Server.Data
 
         public void SetGlobalQueryForTenant<T>(ModelBuilder builder) where T : class, ITenant
         {
-            builder.Entity<T>().HasQueryFilter(item => (_userSession.DisableTenantFilter || EF.Property<Guid>(item, "TenantId") == _userSession.TenantId));
+            builder.Entity<T>().HasQueryFilter(item =>
+            (_userSession.DisableTenantFilter || EF.Property<Guid>(item, "TenantId") == TenantId));
         }
 
         public override int SaveChanges()

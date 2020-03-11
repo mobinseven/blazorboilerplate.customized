@@ -77,24 +77,17 @@ namespace BlazorBoilerplate.Server.Data
                 _context.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
                 await _context.SaveChangesAsync();
             }
-            _userSession.TenantId = (await _context.Tenants.FirstOrDefaultAsync(t => t.Title == TenantConstants.RootTenantTitle)).Id;
 
             await EnsureRoleAsync(RoleConstants.AdminRoleName, "Default administrator", ApplicationPermissions.GetAllPermissionValues());
             await EnsureRoleAsync(RoleConstants.UserRoleName, "Default user", new string[] { });
-            await EnsureRoleAsync(RoleConstants.TenantManagerRoleName, "Tenant Manager",
-                new string[] {
-                        Permissions.Tenant.Manager,
-                        Permissions.Role.Create,
-                        Permissions.Role.Read,
-                        Permissions.Role.Update,
-                        Permissions.Role.Delete
-                });
             if (!await _context.Users.AnyAsync())
             {
                 //Generating inbuilt accounts
 
-                await CreateUserAsync("admin", "admin123", "Admin", "Blazor", "Administrator", "admin@blazoreboilerplate.com", "+1 (123) 456-7890", new string[] { RoleConstants.AdminRoleName });
-                var user = await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { RoleConstants.UserRoleName });
+                var admin = await CreateUserAsync("admin", "admin123", "Admin", "Blazor", "Administrator", "admin@blazoreboilerplate.com", "+1 (123) 456-7890", new string[] { RoleConstants.AdminRoleName });
+                await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { RoleConstants.UserRoleName });
+
+                await _userManager.AddClaimAsync(admin, new Claim(ClaimConstants.TenantId, _context.TenantId.ToString()));
 
                 _logger.LogInformation("Inbuilt account generation completed");
             }

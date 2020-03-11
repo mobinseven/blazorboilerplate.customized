@@ -1,4 +1,6 @@
 ﻿using BlazorBoilerplate.Server.Data;
+using BlazorBoilerplate.Server.Data.Core;
+using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,15 +21,18 @@ namespace BlazorBoilerplate.Server.Authorization
 
         public string Permission { get; set; }
     }
+
     public class PermissionRequirementHandler : AuthorizationHandler<PermissionRequirement>,
         IAuthorizationRequirement
 
     {
         private readonly ApplicationDbContext _context;
+        private readonly IUserSession _userSession;
 
-        public PermissionRequirementHandler(ApplicationDbContext context)
+        public PermissionRequirementHandler(ApplicationDbContext context, IUserSession userSession)
         {
             _context = context;
+            _userSession = userSession;
         }
 
         protected override async Task HandleRequirementAsync(
@@ -44,12 +49,15 @@ namespace BlazorBoilerplate.Server.Authorization
             {
                 return;
             }
-
             var roleClaims = from ur in _context.UserRoles
-                         where ur.UserId == user.Id
-                         join r in _context.Roles on ur.RoleId equals r.Id
-                         join rc in _context.RoleClaims on r.Id equals rc.RoleId
-                         select rc;
+                             where ur.UserId == user.Id
+                             join r in _context.Roles on ur.RoleId equals r.Id
+                             join rc in _context.RoleClaims on r.Id equals rc.RoleId
+                             select rc;
+            var userRole = from ur in _context.UserRoles
+                           where ur.UserId == user.Id
+                           join r in _context.Roles on ur.RoleId equals r.Id
+                           select r;
             if (roleClaims.Any(c => c.ClaimValue == requirement.Permission))
             {
                 context.Succeed(requirement);

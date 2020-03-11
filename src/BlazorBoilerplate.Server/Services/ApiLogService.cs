@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BlazorBoilerplate.Server.Authorization;
 using BlazorBoilerplate.Server.Data;
 using BlazorBoilerplate.Server.Data.Interfaces;
 using BlazorBoilerplate.Server.Middleware.Wrappers;
@@ -37,15 +38,16 @@ namespace BlazorBoilerplate.Server.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserSession _userSession;
+        protected ITenantProvider _tenantProvider;
 
-        public ApiLogService(IConfiguration configuration, ApplicationDbContext db, IMapper autoMapper, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor, IUserSession userSession)
+        public ApiLogService(IConfiguration configuration, ApplicationDbContext db, IMapper autoMapper, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor, IUserSession userSession, ITenantProvider tenantProvider)
         {
             _db = db;
             _autoMapper = autoMapper;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
             _userSession = userSession;
-
+            _tenantProvider = tenantProvider;
             // Calling Log from the API Middlware results in a disposed ApplicationDBContext. This is here to build a DB Context for logging API Calls
             // If you have a better solution please let me know.
             _optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
@@ -82,7 +84,7 @@ namespace BlazorBoilerplate.Server.Services
                 apiLogItem.ApplicationUserId = null;
             }
 
-            using (ApplicationDbContext _dbContext = new ApplicationDbContext(_optionsBuilder.Options, _userSession))
+            using (ApplicationDbContext _dbContext = new ApplicationDbContext(_optionsBuilder.Options, _httpContextAccessor, _userSession))
             {
                 _dbContext.ApiLogs.Add(apiLogItem);
                 await _dbContext.SaveChangesAsync();
