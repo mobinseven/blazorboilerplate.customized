@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using BlazorBoilerplate.Server.Data;
+using BlazorBoilerplate.Server.Data.Core;
 using BlazorBoilerplate.Shared;
 using BlazorBoilerplate.Shared.DataModels;
 using BlazorBoilerplate.Storage.Core;
@@ -11,8 +9,13 @@ using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using ApiLogItem = BlazorBoilerplate.Shared.DataModels.ApiLogItem;
 using UserProfile = BlazorBoilerplate.Shared.DataModels.UserProfile;
+using Microsoft.Data.SqlClient;
 
 namespace BlazorBoilerplate.Storage
 {
@@ -22,7 +25,7 @@ namespace BlazorBoilerplate.Storage
         private readonly ConfigurationDbContext _configurationContext;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger _logger;
 
         public DatabaseInitializer(
@@ -31,7 +34,7 @@ namespace BlazorBoilerplate.Storage
             ConfigurationDbContext configurationContext,
             ILogger<DatabaseInitializer> logger,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole<Guid>> roleManager)
+            RoleManager<ApplicationRole> roleManager)
         {
             _persistedGrantContext = persistedGrantContext;
             _configurationContext = configurationContext;
@@ -54,17 +57,64 @@ namespace BlazorBoilerplate.Storage
 
             //Seed blazorboilerplate data
             await SeedBlazorBoilerplateAsync();
+
+
+            // Create Log table so SQL logging works even when target db did not exist on startup
+            try
+            {
+                await EnsureLogTableCreationAsync().ConfigureAwait(false);
+
+            }
+            catch (SqlException sqlException)
+            {
+                _logger.LogError(sqlException, "error while creating sql log table");
+            }
+        }
+
+        private async Task EnsureLogTableCreationAsync()
+        {
+            // the Serilog SQL logger only works with MSSQL so don't bother if we're not using it
+            if (!_context.Database.IsSqlServer())
+                return;
+
+            // This only works with the default Serilog SQL table layout, primarily a convenience addition
+            // Without this, SQL logging will not work until the project has been started twice (in the case that no db exists initially)
+            using var tr = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable).ConfigureAwait(false);
+            await _context
+                .Database
+                .ExecuteSqlRawAsync("IF (EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = \'dbo\' AND  TABLE_NAME = \'Logs2\'))\r\n" +
+                "PRINT \'Table Exists\';\r\n" +
+                "ELSE\r\n" +
+                "CREATE TABLE [dbo].[Logs2] (\r\n" +
+                "[Id]              INT            IDENTITY (1, 1) NOT NULL,\r\n" +
+                "[Message]         NVARCHAR (MAX) NULL,\r\n" +
+                "[MessageTemplate] NVARCHAR (MAX) NULL,\r\n" +
+                "[Level]           NVARCHAR (MAX) NULL,\r\n" +
+                "[TimeStamp]       DATETIME       NULL,\r\n" +
+                "[Exception]       NVARCHAR (MAX) NULL,\r\n" +
+                "[Properties]      NVARCHAR (MAX) NULL,\r\n" +
+                "CONSTRAINT [PK_Logs2] PRIMARY KEY CLUSTERED ([Id] ASC)\r\n" +
+                ");"
+                 )
+                .ConfigureAwait(false);
+            await tr.CommitAsync().ConfigureAwait(false);
         }
 
         private async Task MigrateAsync()
         {
-            await _context.Database.MigrateAsync().ConfigureAwait(false);
-            await _persistedGrantContext.Database.MigrateAsync().ConfigureAwait(false);
-            await _configurationContext.Database.MigrateAsync().ConfigureAwait(false);
+            await _context.Database.MigrateAsync();
+            await _persistedGrantContext.Database.MigrateAsync();
+            await _configurationContext.Database.MigrateAsync();
         }
 
         private async Task SeedASPIdentityCoreAsync()
         {
+            if (!await _context.Tenants.AnyAsync())
+            {
+                _context.Tenants.Add(new Tenant { Title = TenantConstants.RootTenantTitle });
+                await _context.SaveChangesAsync();
+            }
+
             if (!await _context.Users.AnyAsync())
             {
                 //Generating inbuilt accounts
@@ -78,6 +128,28 @@ namespace BlazorBoilerplate.Storage
                 await CreateUserAsync("user", "user123", "User", "Blazor", "User Blazor", "user@blazoreboilerplate.com", "+1 (123) 456-7890`", new string[] { userRoleName });
 
                 _logger.LogInformation("Inbuilt account generation completed");
+            }
+            else
+            {
+                const string adminRoleName = "Administrator";
+
+                ApplicationRole adminRole = _roleManager.Roles.Single(r => r.Name == adminRoleName);
+                var AllClaims = ApplicationPermissions.GetAllPermissionValues().Distinct();
+                var RoleClaims = (await _roleManager.GetClaimsAsync(adminRole)).Select(c => c.Value).ToList();
+                var NewClaims = AllClaims.Except(RoleClaims);
+                foreach (string claim in NewClaims)
+                {
+                    await _roleManager.AddClaimAsync(adminRole, new Claim(ClaimConstants.Permission, claim));
+                }
+                var DeprecatedClaims = RoleClaims.Except(AllClaims);
+                var roles = await _roleManager.Roles.ToListAsync();
+                foreach (string claim in DeprecatedClaims)
+                {
+                    foreach (var role in roles)
+                    {
+                        await _roleManager.RemoveClaimAsync(role, new Claim(ClaimConstants.Permission, claim));
+                    }
+                }
             }
         }
 
@@ -189,11 +261,11 @@ namespace BlazorBoilerplate.Storage
                 if (invalidClaims.Any())
                     throw new Exception("The following claim types are invalid: " + string.Join(", ", invalidClaims));
 
-                IdentityRole<Guid> applicationRole = new IdentityRole<Guid>(roleName);
+                ApplicationRole applicationRole = new ApplicationRole(roleName);
 
                 var result = await _roleManager.CreateAsync(applicationRole);
 
-                IdentityRole<Guid> role = await _roleManager.FindByNameAsync(applicationRole.Name);
+                ApplicationRole role = await _roleManager.FindByNameAsync(applicationRole.Name);
 
                 foreach (string claim in claims.Distinct())
                 {
@@ -220,7 +292,8 @@ namespace BlazorBoilerplate.Storage
                     PhoneNumber = phoneNumber,
                     FullName = fullName,
                     FirstName = firstName,
-                    LastName = lastName
+                    LastName = lastName,
+                    EmailConfirmed = true
                 };
 
                 var result = _userManager.CreateAsync(applicationUser, password).Result;

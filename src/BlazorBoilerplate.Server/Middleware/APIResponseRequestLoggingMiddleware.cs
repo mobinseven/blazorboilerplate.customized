@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using static Microsoft.AspNetCore.Http.StatusCodes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -77,10 +78,10 @@ namespace BlazorBoilerplate.Server.Middleware
 
                             string responseBodyContent = null;
 
-                            if (httpContext.Response.StatusCode == (int)HttpStatusCode.OK)
+                            if (httpContext.Response.StatusCode == Status200OK)
                             {
                                 responseBodyContent = await FormatResponse(response);
-                                await HandleSuccessRequestAsync(httpContext, responseBodyContent, httpContext.Response.StatusCode);
+                                await HandleSuccessRequestAsync(httpContext, responseBodyContent, Status200OK);
                             }
                             else
                             {
@@ -173,7 +174,7 @@ namespace BlazorBoilerplate.Server.Middleware
             else if (exception is UnauthorizedAccessException)
             {
                 apiError = new ApiError("Unauthorized Access");
-                code = (int)HttpStatusCode.Unauthorized;
+                code = Status401Unauthorized;
                 httpContext.Response.StatusCode = code;
             }
             else
@@ -190,7 +191,7 @@ namespace BlazorBoilerplate.Server.Middleware
                 {
                     Details = stack
                 };
-                code = (int)HttpStatusCode.InternalServerError;
+                code = Status500InternalServerError;
                 httpContext.Response.StatusCode = code;
             }
 
@@ -205,19 +206,19 @@ namespace BlazorBoilerplate.Server.Middleware
         {
             ApiError apiError;
 
-            if (code == (int)HttpStatusCode.NotFound)
+            if (code == Status404NotFound)
             {
                 apiError = new ApiError(ResponseMessageEnum.NotFound.GetDescription());
             }
-            else if (code == (int)HttpStatusCode.NoContent)
+            else if (code == Status204NoContent)
             {
                 apiError = new ApiError(ResponseMessageEnum.NotContent.GetDescription());
             }
-            else if (code == (int)HttpStatusCode.MethodNotAllowed)
+            else if (code == Status405MethodNotAllowed)
             {
                 apiError = new ApiError(ResponseMessageEnum.MethodNotAllowed.GetDescription());
             }
-            else if (code == (int)HttpStatusCode.Unauthorized)
+            else if (code == Status401Unauthorized)
             {
                 apiError = new ApiError(ResponseMessageEnum.UnAuthorized.GetDescription());
             }
@@ -366,7 +367,7 @@ namespace BlazorBoilerplate.Server.Middleware
             }
 
             // If the response body was an ApiResponse we should just save the Result object
-            if (responseBody.Contains("\"result\":"))
+            if (responseBody != null && responseBody.Contains("\"result\":"))
             {
                 try
                 {
@@ -376,7 +377,7 @@ namespace BlazorBoilerplate.Server.Middleware
                 catch { }
             }
 
-            if (responseBody.Length > 256)
+            if (responseBody != null && responseBody.Length > 256)
             {
                 responseBody = $"(Truncated to 200 chars) {responseBody.Substring(0, 200)}";
             }

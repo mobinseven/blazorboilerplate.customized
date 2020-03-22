@@ -7,6 +7,7 @@ using BlazorBoilerplate.Shared.Dto.Account;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
+using static Microsoft.AspNetCore.Http.StatusCodes;
 
 namespace BlazorBoilerplate.CommonUI
 {
@@ -70,7 +71,7 @@ namespace BlazorBoilerplate.CommonUI
 
             ApiResponseDto apiResponse = await _userProfileApi.Get();
 
-            if (apiResponse.StatusCode == 200)
+            if (apiResponse.StatusCode == Status200OK)
             {
                 return JsonConvert.DeserializeObject<UserProfileDto>(apiResponse.Result.ToString());
             }

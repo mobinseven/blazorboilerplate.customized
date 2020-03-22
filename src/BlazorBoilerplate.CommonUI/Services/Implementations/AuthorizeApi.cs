@@ -1,15 +1,12 @@
 ﻿using BlazorBoilerplate.CommonUI.Services.Contracts;
 using BlazorBoilerplate.Shared.Dto;
-using BlazorBoilerplate.Shared.Dto.Account;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
+using BlazorBoilerplate.Shared.Dto.Account;
+using Microsoft.JSInterop;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
+
+using static Microsoft.AspNetCore.Http.StatusCodes;
 
 namespace BlazorBoilerplate.CommonUI.Services.Implementations
 {
@@ -30,38 +27,36 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
         {
             ApiResponseDto resp;
 
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/Account/Login")
-            {
-                Content = new StringContent(JsonConvert.SerializeObject(loginParameters))
-            };
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "api/Account/Login");
+            httpRequestMessage.Content = new StringContent(JsonConvert.SerializeObject(loginParameters));
             httpRequestMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
-            using (HttpResponseMessage response = await _httpClient.SendAsync(httpRequestMessage))
+            using (var response = await _httpClient.SendAsync(httpRequestMessage))
             {
                 response.EnsureSuccessStatusCode();
 
 #if ServerSideBlazor
 
-                if (response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string> cookieEntries))
+                if (response.Headers.TryGetValues("Set-Cookie", out var cookieEntries))
                 {
-                    Uri uri = response.RequestMessage.RequestUri;
-                    CookieContainer cookieContainer = new CookieContainer();
+                    var uri = response.RequestMessage.RequestUri;
+                    var cookieContainer = new CookieContainer();
 
-                    foreach (string cookieEntry in cookieEntries)
+                    foreach (var cookieEntry in cookieEntries)
                     {
                         cookieContainer.SetCookies(uri, cookieEntry);
                     }
 
-                    IEnumerable<Cookie> cookies = cookieContainer.GetCookies(uri).Cast<Cookie>();
+                    var cookies = cookieContainer.GetCookies(uri).Cast<Cookie>();
 
-                    foreach (Cookie cookie in cookies)
+                    foreach (var cookie in cookies)
                     {
-                        await _jsRuntime.InvokeVoidAsync("jsInterops.setCookie", cookie.ToString());
+                       await _jsRuntime.InvokeVoidAsync("jsInterops.setCookie", cookie.ToString());
                     }
                 }
 #endif
 
-                string content = await response.Content.ReadAsStringAsync();
+                var content = await response.Content.ReadAsStringAsync();
                 resp = JsonConvert.DeserializeObject<ApiResponseDto>(content);
             }
 
@@ -79,7 +74,7 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
             var resp = await _httpClient.PostJsonAsync<ApiResponseDto>("api/Account/Logout", null);
 
 #if ServerSideBlazor
-            if (resp.StatusCode == 200 && cookies != null && cookies.Any())
+            if (resp.StatusCode == Status200OK  && cookies != null && cookies.Any())
             {
                 _httpClient.DefaultRequestHeaders.Remove("Cookie");
 
@@ -124,7 +119,7 @@ namespace BlazorBoilerplate.CommonUI.Services.Implementations
             UserInfoDto userInfo = new UserInfoDto { IsAuthenticated = false, Roles = new List<string>() };
             ApiResponseDto apiResponse = await _httpClient.GetJsonAsync<ApiResponseDto>("api/Account/UserInfo");
 
-            if (apiResponse.StatusCode == 200)
+            if (apiResponse.StatusCode == Status200OK)
             {
                 userInfo = JsonConvert.DeserializeObject<UserInfoDto>(apiResponse.Result.ToString());
                 return userInfo;

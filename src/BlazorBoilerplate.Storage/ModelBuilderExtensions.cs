@@ -14,7 +14,7 @@ namespace BlazorBoilerplate.Storage
         {
             foreach (var tp in modelBuilder.Model.GetEntityTypes())
             {
-                var t = tp.ClrType;
+                Type t = tp.ClrType;
 
                 // set auditing properties
                 if (typeof(IAuditable).IsAssignableFrom(t))
@@ -28,6 +28,8 @@ namespace BlazorBoilerplate.Storage
                 {
                     var method = SetTenantShadowPropertyMethodInfo.MakeGenericMethod(t);
                     method.Invoke(modelBuilder, new object[] { modelBuilder });
+
+                    SetTenantIdClusteredIndexsMethodInfo.MakeGenericMethod(t).Invoke(modelBuilder, new object[] { modelBuilder });
                 }
 
                 // set soft delete property
@@ -45,8 +47,12 @@ namespace BlazorBoilerplate.Storage
         private static readonly MethodInfo SetTenantShadowPropertyMethodInfo = typeof(ModelBuilderExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(t => t.IsGenericMethod && t.Name == "SetTenantShadowProperty");
 
+        private static readonly MethodInfo SetTenantIdClusteredIndexsMethodInfo = typeof(ModelBuilderExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(t => t.IsGenericMethod && t.Name == "SetTenantIdClusteredIndex");
+
         private static readonly MethodInfo SetAuditingShadowPropertiesMethodInfo = typeof(ModelBuilderExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(t => t.IsGenericMethod && t.Name == "SetAuditingShadowProperties");
+
 
         public static void SetIsDeletedShadowProperty<T>(ModelBuilder builder) where T : class, ISoftDelete
         {
@@ -57,9 +63,15 @@ namespace BlazorBoilerplate.Storage
         public static void SetTenantShadowProperty<T>(ModelBuilder builder) where T : class, ITenant
         {
             // define shadow property
-            builder.Entity<T>().Property<int>("TenantId");
+            builder.Entity<T>().Property<Guid>("TenantId");
             // define FK to Tenant
             builder.Entity<T>().HasOne<Tenant>().WithMany().HasForeignKey("TenantId").OnDelete(DeleteBehavior.Restrict);
+        }
+
+        public static void SetTenantIdClusteredIndex<T>(ModelBuilder builder) where T : class, ITenant
+        {
+            //TODO PK must be clustered?
+            builder.Entity<T>().HasIndex("TenantId").IsClustered().IsUnique(false);
         }
 
         public static void SetAuditingShadowProperties<T>(ModelBuilder builder) where T : class, IAuditable
@@ -69,10 +81,6 @@ namespace BlazorBoilerplate.Storage
             builder.Entity<T>().Property<DateTime>("ModifiedOn").HasDefaultValueSql("CURRENT_TIMESTAMP");
             builder.Entity<T>().Property<Guid>("CreatedBy");
             builder.Entity<T>().Property<Guid>("ModifiedBy");
-
-            // define FKs to User
-            //builder.Entity<T>().HasOne<ApplicationUser>().WithMany().HasForeignKey("CreatedBy").OnDelete(DeleteBehavior.Restrict);
-            //builder.Entity<T>().HasOne<ApplicationUser>().WithMany().HasForeignKey("ModifiedBy").OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

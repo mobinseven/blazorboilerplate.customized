@@ -11,6 +11,8 @@ using BlazorBoilerplate.Storage;
 using BlazorBoilerplate.Storage.Stores;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using static Microsoft.AspNetCore.Http.StatusCodes;
+using Microsoft.AspNetCore.Http;
 
 namespace BlazorBoilerplate.Server.Managers
 {
@@ -21,12 +23,14 @@ namespace BlazorBoilerplate.Server.Managers
         private readonly DbContextOptionsBuilder<ApplicationDbContext> _optionsBuilder;
         private readonly IMapper _autoMapper;
         private readonly IUserSession _userSession;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ApiLogManager(IConfiguration configuration, IApiLogStore apiLogStore, IApplicationDbContext db, IUserSession userSession)
+        public ApiLogManager(IConfiguration configuration, IApiLogStore apiLogStore, IApplicationDbContext db, IUserSession userSession, IHttpContextAccessor httpContextAccessor)
         {
             _apiLogStore = apiLogStore;
             _db = db;
             _userSession = userSession;
+            _httpContextAccessor = httpContextAccessor;
 
             // Calling Log from the API Middlware results in a disposed ApplicationDBContext. This is here to build a DB Context for logging API Calls
             // If you have a better solution please let me know.
@@ -64,7 +68,7 @@ namespace BlazorBoilerplate.Server.Managers
                 apiLogItem.ApplicationUserId = null;
             }
 
-            using (var dbContext = new ApplicationDbContext(_optionsBuilder.Options, _userSession))
+            using (var dbContext = new ApplicationDbContext(_optionsBuilder.Options, _httpContextAccessor, _userSession))
             {
                 dbContext.ApiLogs.Add(apiLogItem);
                 await dbContext.SaveChangesAsync(CancellationToken.None);
@@ -73,18 +77,18 @@ namespace BlazorBoilerplate.Server.Managers
 
         public async Task<ApiResponse> Get()
         {
-            return new ApiResponse(200, "Retrieved Api Log", _apiLogStore.Get());
+            return new ApiResponse(Status200OK, "Retrieved Api Log", await _apiLogStore.Get());
         }
 
         public async Task<ApiResponse> GetByApplicationUserId(Guid applicationUserId)
         {
             try
             {
-                return new ApiResponse(200, "Retrieved Api Log", _apiLogStore.GetByUserId(applicationUserId));
+                return new ApiResponse(Status200OK, "Retrieved Api Log", await _apiLogStore.GetByUserId(applicationUserId));
             }
             catch (Exception ex)
             {
-                return new ApiResponse(400, ex.Message);
+                return new ApiResponse(Status400BadRequest, ex.Message);
             }
         }
     }

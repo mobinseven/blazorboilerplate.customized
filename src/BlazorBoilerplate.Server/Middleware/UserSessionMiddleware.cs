@@ -9,19 +9,22 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using BlazorBoilerplate.Shared.DataInterfaces;
+using static Microsoft.AspNetCore.Http.StatusCodes;
 
 namespace BlazorBoilerplate.Server.Middleware
 {
     public class UserSessionMiddleware
     {
-        ILogger<UserSessionMiddleware> _logger;
+        private ILogger<UserSessionMiddleware> _logger;
 
         //https://trailheadtechnology.com/aspnetcore-multi-tenant-tips-and-tricks/
         private readonly RequestDelegate _next;
+
         public UserSessionMiddleware(RequestDelegate next)
         {
             _next = next;
         }
+
         public async Task InvokeAsync(HttpContext httpContext, ILogger<UserSessionMiddleware> logger, IUserSession userSession)
         {
             _logger = logger;
@@ -34,13 +37,11 @@ namespace BlazorBoilerplate.Server.Middleware
                 {
                     userSession.UserId = new Guid(httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Subject).First().Value);
                     userSession.UserName = httpContext.User.Identity.Name;
-                    userSession.TenantId = -1; // ClaimsHelper.GetClaim<int>(context.User, "tenantid");
                     userSession.Roles = httpContext.User.Claims.Where(c => c.Type == JwtClaimTypes.Role).Select(c => c.Value).ToList();
                 }
 
                 // Call the next delegate/middleware in the pipeline
                 await _next.Invoke(httpContext);
-
             }
             catch (Exception ex)
             {
@@ -75,12 +76,11 @@ namespace BlazorBoilerplate.Server.Middleware
                 };
                 code = ex.StatusCode;
                 httpContext.Response.StatusCode = code;
-
             }
             else if (exception is UnauthorizedAccessException)
             {
                 apiError = new ApiError("Unauthorized Access");
-                code = (int)HttpStatusCode.Unauthorized;
+                code = Status401Unauthorized;
                 httpContext.Response.StatusCode = code;
             }
             else
@@ -97,7 +97,7 @@ namespace BlazorBoilerplate.Server.Middleware
                 {
                     Details = stack
                 };
-                code = (int)HttpStatusCode.InternalServerError;
+                code = Status500InternalServerError;
                 httpContext.Response.StatusCode = code;
             }
 
